@@ -1,8 +1,8 @@
 # @version ^0.2.0
 
-from vyper.interfaces import ERC721
+from ..interfaces import FRMRegistryInterface
 
-implements: ERC721
+implements: FRMRegistryInterface
 
 # Interface for the contract called by safeTransferFrom()
 interface ERC721Receiver:
