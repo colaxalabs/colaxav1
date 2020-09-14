@@ -38,6 +38,7 @@ struct Farm:
   latitude: decimal
   imageHash: String[255]
   soil: String[20]
+  season: String[20]
   owner: address
 
 # @dev Map token to Farm
@@ -45,6 +46,9 @@ tokenizedFarms: HashMap[uint256, Farm]
 
 # Total tokenized lands
 tokenizedLands: uint256
+
+# @dev Index tokenized farms
+indexedTokenizedFarms: HashMap[uint256, Farm]
 
 # @dev Mapping for supported interfaces
 supportedInterfaces: HashMap[bytes32, bool]
@@ -56,7 +60,7 @@ idToOwner: HashMap[uint256, address]
 idToApprovals: HashMap[uint256, address]
 
 # @dev Mapping address to number of owned ID to NFT
-ownedNFT: HashMap[address, HashMap[uint256, uint256]]
+ownedNFT: HashMap[address, HashMap[uint256, Farm]]
 
 # @dev Mapping number of owned NFT to address
 ownerNFTCount: HashMap[address, uint256]
@@ -191,7 +195,6 @@ def _addToken(_to: address, _tokenId: uint256):
   self.idToOwner[_tokenId] = _to
   # Update NFT owner count
   self.ownerNFTCount[_to] += 1
-  (self.ownedNFT[_to])[self.ownerNFTCount[_to]] = _tokenId
 
 # @dev Remove token from a given address
 # Throws if `_from` is not the current owner
@@ -202,7 +205,6 @@ def _removeToken(_from: address, _tokenId: uint256):
   # Update owner
   self.idToOwner[_tokenId] = ZERO_ADDRESS
   # Update NFT owner count
-  (self.ownedNFT[_from])[self.ownerNFTCount[_from]] = 0
   self.ownerNFTCount[_from] -= 1
 
 # @dev Clear an approval of a given address
@@ -360,19 +362,41 @@ def tokenizeLand(_name: String[100], _size: String[20], _longitude: decimal, _la
   # Mint token
   self.mint(msg.sender, _tokenId)
   # Tokenize farm land
-  self.tokenizedFarms[_tokenId] = Farm({name: _name, size: _size, longitude: _longitude, latitude: _latitude, imageHash: _imageHash, soil: _soil, owner: msg.sender})
+  _farm: Farm = Farm({
+    name: _name,
+    size: _size,
+    longitude: _longitude,
+    latitude: _latitude,
+    imageHash: _imageHash,
+    soil: _soil,
+    season: 'Dormant',
+    owner: msg.sender
+  })
+  self.tokenizedFarms[_tokenId] = _farm
   self.tokenizedLands += 1
+  self.indexedTokenizedFarms[self.tokenizedLands] = _farm
+  # Indexed
+  (self.ownedNFT[msg.sender])[self.ownerNFTCount[msg.sender]] = _farm
   log Tokenize(msg.sender, _tokenId, _name) 
 
 # @dev Query tokenized farm land
 # @dev Throw if `_tokenId` is not valid
-# @param _tokenId Token ID to query
+# @param _index Index of the farm
 # @return Farm
 @external
 @view
-def queryFarm(_tokenId: uint256) -> Farm:
-  assert self.idToOwner[_tokenId] != ZERO_ADDRESS
-  return self.tokenizedFarms[_tokenId]
+def queryUserTokenizedFarm(_index: uint256) -> Farm:
+  assert _index <= self.ownerNFTCount[msg.sender]
+  return (self.ownedNFT[msg.sender])[_index]
+
+# @dev Return tokenized farm
+# @dev Throw if `_index` is > self.tokenizedLands
+# @return Farm
+@external
+@view
+def queryTokenizedFarm(_index: uint256) -> Farm:
+  assert _index <= self.tokenizedLands
+  return self.indexedTokenizedFarms[_index]
 
 # @dev Return total number of tokenized farms
 # @return uint256
