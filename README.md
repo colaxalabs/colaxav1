@@ -1,3 +1,3 @@
-# taxa v1
+# Mkulima v1
 
-This repository contains taxa v1 smart contracts
+This repository contains mkulima v1 protocols
