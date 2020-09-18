@@ -1,5 +1,5 @@
 import pytest
-
+import brownie
 from brownie import FRMRegistry
 
 token_id = 4833475
@@ -11,5 +11,7 @@ def season_contract(Season, accounts):
     yield Season.deploy(frmregistry_contract.address, {'from': accounts[0]})
 
 def test_initial_state(season_contract):
+    # Assertions
+    assert season_contract.currentSeason(token_id) == 0
     assert season_contract.completeSeasons() == 0
 
