@@ -405,3 +405,31 @@ def queryTokenizedFarm(_index: uint256) -> Farm:
 def totalTokenizedFarms() -> uint256:
   return self.tokenizedLands
 
+# @dev Check if farm is tokenized
+# @param _tokenId Token ID to verify
+# @return bool
+@external
+@view
+def exists(_tokenId: uint256) -> bool:
+  if self.idToOwner[_tokenId] == ZERO_ADDRESS:
+    return False
+  else:
+    return True
+
+# @dev Update farm state
+# @param _tokenId Token ID
+@external
+def updateState(_tokenId: uint256, _state: String[20]):
+  assert self.idToOwner[_tokenId] != ZERO_ADDRESS
+  assert self.idToOwner[_tokenId] == msg.sender # Only owner can update season
+  self.tokenizedFarms[_tokenId].season = _state
+
+# @dev Get token state
+# @param _tokenId Token ID
+# @return String
+@external
+@view
+def getTokenState(_tokenId: uint256) -> String[20]:
+  assert self.idToOwner[_tokenId] != ZERO_ADDRESS
+  return self.tokenizedFarms[_tokenId].season
+

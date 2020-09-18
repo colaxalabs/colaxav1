@@ -102,3 +102,17 @@ def tokenizeLand(_name: String[100], _size: String[20], _longitude: decimal, _la
 def totalTokenizedFarms() -> uint256:
     pass
 
+@view
+@external
+def exists(_tokenId: uint256) -> bool:
+  pass
+
+@external
+def updateState(_tokenId: uint256, _state: String[20]):
+    pass
+
+@view
+@external
+def getTokenState(_tokenId: uint256) -> String[20]:
+    pass
+

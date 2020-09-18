@@ -2,8 +2,9 @@
 
 # External Interfaces
 interface Frmregistry:
-    def name() -> String[4]: view
-    def symbol() -> String[3]: view
+    def exists(_tokenId: uint256) -> bool: view
+    def updateState(_tokenId: uint256, _state: String[20]): nonpayable
+    def getTokenState(_tokneId: uint256) -> String[20]: view
 
 # Events
 
@@ -29,7 +30,7 @@ event Harvesting:
 totalCompletedSeasons: uint256
 
 # @dev Current farm season
-currentSeason: HashMap[uint256, uint256]
+runningSeason: HashMap[uint256, uint256]
 
 # @dev Farm season data
 struct SeasonData:
@@ -50,12 +51,21 @@ seasonData: HashMap[uint256, HashMap[uint256, SeasonData]]
 farm_registry: Frmregistry
 
 @external
-def __init__(contract_address: address):
-  self.farm_registry = Frmregistry(contract_address)
+def __init__(registry_contract_address: address):
+  self.farm_registry = Frmregistry(registry_contract_address)
 
 # @dev Return total completed seasons
 @external
 @view
 def completeSeasons() -> uint256:
   return self.totalCompletedSeasons
+
+# @dev Return current season for tokenized farm
+# @param _tokenId Token ID
+# @return uint256
+@external
+@view
+def currentSeason(_tokenId: uint256) -> uint256:
+  assert self.farm_registry.exists(_tokenId) == True
+  return self.runningSeason[_tokenId]
 
