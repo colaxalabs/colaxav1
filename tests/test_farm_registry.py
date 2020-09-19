@@ -2,13 +2,15 @@ import pytest
 
 token_id = 48983476
 
-def tokenize_farm(frmregistry_contract, accounts):
-    tx = frmregistry_contract.tokenizeLand('Arunga Vineyard', '294.32ha', '36.389223', '-1.282883', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
-    return tx
+
 
 @pytest.fixture
 def frmregistry_contract(FRMRegistry, accounts):
     yield FRMRegistry.deploy({'from': accounts[0]})
+
+def tokenize_farm(frmregistry_contract, accounts):
+    tx = frmregistry_contract.tokenizeLand('Arunga Vineyard', '294.32ha', '36.389223', '-1.282883', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
+    return tx
 
 def test_initial_state(frmregistry_contract):
     assert frmregistry_contract.totalSupply() == 0
