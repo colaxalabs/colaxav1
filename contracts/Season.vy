@@ -4,7 +4,7 @@
 interface Frmregistry:
     def exists(_tokenId: uint256) -> bool: view
     def updateState(_tokenId: uint256, _state: String[20]): nonpayable
-    def getTokenState(_tokneId: uint256) -> String[20]: view
+    def getTokenState(_tokenId: uint256) -> String[20]: view
 
 # Events
 
@@ -28,6 +28,9 @@ event Harvesting:
 
 # @dev Completed farm seasons
 totalCompletedSeasons: uint256
+
+# @dev Farm completed farm
+farmCompleteSeason: HashMap[uint256, uint256]
 
 # @dev Current farm season
 runningSeason: HashMap[uint256, uint256]
@@ -55,6 +58,7 @@ def __init__(registry_contract_address: address):
   self.farm_registry = Frmregistry(registry_contract_address)
 
 # @dev Return total completed seasons
+# @return Completed seasons
 @external
 @view
 def completeSeasons() -> uint256:
@@ -68,4 +72,31 @@ def completeSeasons() -> uint256:
 def currentSeason(_tokenId: uint256) -> uint256:
   assert self.farm_registry.exists(_tokenId) == True
   return self.runningSeason[_tokenId]
+
+# @dev Get token season
+# @param _tokenId Token ID
+# @return String
+@external
+@view
+def getSeason(_tokenId: uint256) -> String[20]:
+  assert self.farm_registry.exists(_tokenId) == True
+  return self.farm_registry.getTokenState(_tokenId)
+
+# @dev Query season data
+# @param _tokenId Tokenized farm
+# @param _index Season index
+@external
+@view
+def querySeasonData(_tokenId: uint256, _index: uint256) -> SeasonData:
+  assert self.farm_registry.exists(_tokenId) == True
+  assert _index <= self.farmCompleteSeason[_tokenId]
+  return (self.seasonData[_tokenId])[_index]
+
+# @dev Farm complete season
+# @param _tokenId Tokenized farm
+@external
+@view
+def getFarmCompleteSeasons(_tokenId: uint256) -> uint256:
+  assert self.farm_registry.exists(_tokenId) == True
+  return self.farmCompleteSeason[_tokenId]
 
