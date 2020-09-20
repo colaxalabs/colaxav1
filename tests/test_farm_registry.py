@@ -1,5 +1,7 @@
 import pytest
 
+import brownie
+
 token_id = 48983476
 
 @pytest.fixture
@@ -15,6 +17,17 @@ def test_initial_state(frmregistry_contract):
     # Assertions
     assert frmregistry_contract.totalSupply() == 0
     assert frmregistry_contract.exists(token_id) == False
+
+def test_validate_tokenized_farm(frmregistry_contract, accounts):
+    tokenize_farm(frmregistry_contract, accounts)
+
+    # Assertions
+    assert frmregistry_contract.exists(token_id) == True
+
+def test_validate_invalid_tokenized_farm(frmregistry_contract):
+
+    # Assertions
+    assert frmregistry_contract.exists(2) == False
 
 def test_get_nft_token_name(frmregistry_contract):
 
@@ -91,4 +104,18 @@ def test_update_tokenized_farm_state(frmregistry_contract, accounts):
 
     # Assertions
     assert frmregistry_contract.getTokenState(token_id) == 'Preparation'
+
+def test_only_owner_can_update_tokenized_farm_state(frmregistry_contract, accounts):
+    tokenize_farm(frmregistry_contract, accounts)
+
+    # Error assertions
+    with brownie.reverts():
+        frmregistry_contract.updateState(token_id, 'Preparation', {'from': accounts[1]})
+
+def test_update_invalid_tokenized_farm(frmregistry_contract, accounts):
+    tokenize_farm(frmregistry_contract, accounts)
+
+    # Error assertions
+    with brownie.reverts():
+        frmregistry_contract.updateState(3, 'Planting')
 
