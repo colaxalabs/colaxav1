@@ -66,7 +66,7 @@ ownedNFT: HashMap[address, HashMap[uint256, Farm]]
 ownerNFTCount: HashMap[address, uint256]
 
 # Token name
-tokenName: String[4]
+tokenName: String[10]
 
 # Token symbol
 tokenSymbol: String[3]
@@ -90,8 +90,8 @@ ERC721_INTERFACE_ID: constant(bytes32) = 0x0000000000000000000000000000000000000
 
 @external
 def __init__():
-  self.tokenName = 'TAXA'
-  self.tokenSymbol = 'TXA'
+  self.tokenName = 'Mkulima'
+  self.tokenSymbol = 'MKL'
   # The interface ID of supportedInterfaces
   self.supportedInterfaces[ERC165_INTERFACE_ID] = True
   self.supportedInterfaces[ERC721_INTERFACE_ID] = True
@@ -100,7 +100,7 @@ def __init__():
 # @dev Return token name
 @external
 @view
-def name() -> String[4]:
+def name() -> String[10]:
   return self.tokenName
 
 # @dev Return token symbol
