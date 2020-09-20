@@ -2,8 +2,6 @@ import pytest
 
 token_id = 48983476
 
-
-
 @pytest.fixture
 def frmregistry_contract(FRMRegistry, accounts):
     yield FRMRegistry.deploy({'from': accounts[0]})
@@ -13,16 +11,36 @@ def tokenize_farm(frmregistry_contract, accounts):
     return tx
 
 def test_initial_state(frmregistry_contract):
+
+    # Assertions
     assert frmregistry_contract.totalSupply() == 0
+    assert frmregistry_contract.exists(token_id) == False
+
+def test_get_nft_token_name(frmregistry_contract):
+
+    # Assertions
+    assert frmregistry_contract.name() == 'Mkulima'
+
+def test_get_nft_token_symbol(frmregistry_contract):
+
+    # Assertions
+    assert frmregistry_contract.symbol() == 'MKL'
 
 def test_tokenize_farm(frmregistry_contract, accounts):
     tx = tokenize_farm(frmregistry_contract, accounts)
 
     # Check log contents
+    assert frmregistry_contract.exists(token_id) == True
     assert len(tx.events) == 2
     assert tx.events[1]['_owner'] == accounts[0]
     assert tx.events[1]['_tokenId'] == token_id
     assert tx.events[1]['_name'] == 'Arunga Vineyard'
+
+def test_get_owner_of_tokenized_farm(frmregistry_contract, accounts):
+    tokenize_farm(frmregistry_contract, accounts)
+
+    # Assertions
+    assert frmregistry_contract.ownerOf(token_id) == accounts[0]
 
 def test_total_user_tokenized_farms(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
@@ -59,4 +77,18 @@ def test_index_all_tokenized_farms(frmregistry_contract, accounts):
     assert len(indexed_farms) == 1
     assert indexed_farms[0][0] == 'Arunga Vineyard'
     assert indexed_farms[0][6] == 'Dormant'
+
+def test_get_tokenized_farm_state(frmregistry_contract, accounts):
+    tokenize_farm(frmregistry_contract, accounts)
+
+    # Assertions
+    assert frmregistry_contract.getTokenState(token_id) == 'Dormant'
+
+def test_update_tokenized_farm_state(frmregistry_contract, accounts):
+    tokenize_farm(frmregistry_contract, accounts)
+
+    frmregistry_contract.updateState(token_id, 'Preparation')
+
+    # Assertions
+    assert frmregistry_contract.getTokenState(token_id) == 'Preparation'
 
