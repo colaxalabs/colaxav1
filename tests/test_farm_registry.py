@@ -100,7 +100,7 @@ def test_get_tokenized_farm_state(frmregistry_contract, accounts):
 def test_update_tokenized_farm_state(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
 
-    frmregistry_contract.updateState(token_id, 'Preparation')
+    frmregistry_contract.transitionState(token_id, 'Preparation')
 
     # Assertions
     assert frmregistry_contract.getTokenState(token_id) == 'Preparation'
@@ -110,12 +110,12 @@ def test_only_owner_can_update_tokenized_farm_state(frmregistry_contract, accoun
 
     # Error assertions
     with brownie.reverts():
-        frmregistry_contract.updateState(token_id, 'Preparation', {'from': accounts[1]})
+        frmregistry_contract.transitionState(token_id, 'Preparation', {'from': accounts[1]})
 
 def test_update_invalid_tokenized_farm(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
 
     # Error assertions
     with brownie.reverts():
-        frmregistry_contract.updateState(3, 'Planting')
+        frmregistry_contract.transitionState(3, 'Planting')
 

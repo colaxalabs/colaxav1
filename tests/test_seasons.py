@@ -16,6 +16,22 @@ def test_initial_state(season_contract):
     assert season_contract.currentSeason(token_id) == 0
     assert season_contract.completeSeasons() == 0
 
+def test_get_tokenized_farm_current_season(season_contract):
+
+    # Assertions
+    assert season_contract.currentSeason(token_id) == 0
+
+def test_get_current_season_for_invalid_tokenized_farm(season_contract):
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.currentSeason(3382)
+
+def test_get_completed_seasons(season_contract):
+
+    # Assertions
+    assert season_contract.completeSeasons() == 0
+
 def test_invalid_token_season(season_contract):
 
     # Error assertions
