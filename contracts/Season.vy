@@ -2,8 +2,9 @@
 
 # External Interfaces
 interface Frmregistry:
+    def ownerOf(_tokenId: uint256) -> address: view
     def exists(_tokenId: uint256) -> bool: view
-    def updateState(_tokenId: uint256, _state: String[20]): nonpayable
+    def transitionState(_tokenId: uint256, _state: String[20]): nonpayable
     def getTokenState(_tokenId: uint256) -> String[20]: view
 
 # Events
@@ -43,6 +44,7 @@ struct SeasonData:
   seedsUsed: String[225]
   seedsSupplier: String[225]
   expectedYield: String[50]
+  pesticideUsed: String[225]
   harvestSupply: uint256
   harvestUnit: String[20]
   harvestPrice: String[225]
@@ -73,6 +75,15 @@ def currentSeason(_tokenId: uint256) -> uint256:
   assert self.farm_registry.exists(_tokenId) == True
   return self.runningSeason[_tokenId]
 
+# @dev Open season: Token should be in dormant state to open new season
+# @param _tokenId Tokenized farm ID
+@external
+def openSeason(_tokenId: uint256):
+  assert self.farm_registry.getTokenState(_tokenId) == 'Dormant' # dev: is not dormant
+  assert self.farm_registry.ownerOf(_tokenId) == msg.sender # dev: only owner can transition farm state
+  self.runningSeason[_tokenId] += 1
+  self.farm_registry.transitionState(_tokenId, 'Preparation')
+
 # @dev Get token season
 # @param _tokenId Token ID
 # @return String
@@ -99,4 +110,13 @@ def querySeasonData(_tokenId: uint256, _index: uint256) -> SeasonData:
 def getFarmCompleteSeasons(_tokenId: uint256) -> uint256:
   assert self.farm_registry.exists(_tokenId) == True
   return self.farmCompleteSeason[_tokenId]
+
+# @dev Close season: token should be in harvesting state to close season
+# @param _tokenId Tokenized farm ID
+@external
+def closeSeason(_tokenId: uint256):
+  assert self.farm_registry.getTokenState(_tokenId) == 'Harvesting' # dev: is not harvesting
+  assert (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply == 0 # dev: supply is not exhausted
+  self.farmCompleteSeason[_tokenId] += 1
+  self.farm_registry.transitionState(_tokenId, 'Dormant')
 
