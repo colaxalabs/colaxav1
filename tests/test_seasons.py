@@ -53,7 +53,7 @@ def test_farm_season_opening(season_contract):
 def test_unrestricted_farm_season_opening(season_contract, accounts):
 
     # Error assertions
-    with brownie.reverts('dev: only owner can transition farm state'):
+    with brownie.reverts('dev: only owner can update state'):
         season_contract.openSeason(token_id, {'from': accounts[1]})
 
 def test_unrestricted_season_closure(season_contract):
