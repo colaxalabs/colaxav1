@@ -108,7 +108,7 @@ def exists(_tokenId: uint256) -> bool:
   pass
 
 @external
-def transitionState(_tokenId: uint256, _state: String[20]):
+def transitionState(_tokenId: uint256, _state: String[20], _sender: address):
     pass
 
 @view

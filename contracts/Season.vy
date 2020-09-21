@@ -4,7 +4,7 @@
 interface Frmregistry:
     def ownerOf(_tokenId: uint256) -> address: view
     def exists(_tokenId: uint256) -> bool: view
-    def transitionState(_tokenId: uint256, _state: String[20]): nonpayable
+    def transitionState(_tokenId: uint256, _state: String[20], _sender: address): nonpayable
     def getTokenState(_tokenId: uint256) -> String[20]: view
 
 # Events
@@ -80,9 +80,8 @@ def currentSeason(_tokenId: uint256) -> uint256:
 @external
 def openSeason(_tokenId: uint256):
   assert self.farm_registry.getTokenState(_tokenId) == 'Dormant' # dev: is not dormant
-  assert self.farm_registry.ownerOf(_tokenId) == msg.sender # dev: only owner can transition farm state
   self.runningSeason[_tokenId] += 1
-  self.farm_registry.transitionState(_tokenId, 'Preparation')
+  self.farm_registry.transitionState(_tokenId, 'Preparation', msg.sender) # dev: only owner can update state
 
 # @dev Get token season
 # @param _tokenId Token ID
@@ -118,5 +117,5 @@ def closeSeason(_tokenId: uint256):
   assert self.farm_registry.getTokenState(_tokenId) == 'Harvesting' # dev: is not harvesting
   assert (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply == 0 # dev: supply is not exhausted
   self.farmCompleteSeason[_tokenId] += 1
-  self.farm_registry.transitionState(_tokenId, 'Dormant')
+  self.farm_registry.transitionState(_tokenId, 'Dormant', msg.sender)
 

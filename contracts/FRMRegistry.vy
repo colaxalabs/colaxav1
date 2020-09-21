@@ -419,8 +419,9 @@ def exists(_tokenId: uint256) -> bool:
 # @dev Update farm state
 # @param _tokenId Token ID
 @external
-def transitionState(_tokenId: uint256, _state: String[20]):
+def transitionState(_tokenId: uint256, _state: String[20], _sender: address):
   assert self.idToOwner[_tokenId] != ZERO_ADDRESS # dev: Invalid address
+  assert self.idToOwner[_tokenId] == _sender # dev: only owner can update state
   self.tokenizedFarms[_tokenId].season = _state
 
 # @dev Get token state
