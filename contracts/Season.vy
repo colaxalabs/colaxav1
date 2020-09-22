@@ -45,13 +45,13 @@ struct SeasonData:
   seedsUsed: String[225]
   seedsSupplier: String[225]
   expectedYield: String[50]
-  pesticideUsed: String[225]
-  pesticideSupplier: String[225]
   plantingFertilizer: String[225]
   plantingFertilizerSupplier: String[225]
+  pesticideUsed: String[225]
+  pesticideSupplier: String[225]
   harvestSupply: uint256
   harvestUnit: String[100]
-  harvestPrice: String[225]
+  harvestPrice: uint256
 
 # @dev Map season data to farm
 seasonData: HashMap[uint256, HashMap[uint256, SeasonData]]
@@ -149,7 +149,7 @@ def confirmGrowth(_tokenId: uint256, _pesticideUsed: String[225], _pesticideSupp
 # @param _harvestUnit Harvest supply unit
 # @param _unitPrice Harvest price per unit
 @external
-def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: String[100], _unitPrice: String[225]):
+def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: String[100], _unitPrice: uint256):
   assert self.farm_registry.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm harvesting
   assert self.farm_registry.getTokenState(_tokenId) == 'Harvesting' # dev: state is not harvesting
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply = _harvestSupply
@@ -165,7 +165,7 @@ def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: 
 @view
 def querySeasonData(_tokenId: uint256, _index: uint256) -> SeasonData:
   assert self.farm_registry.exists(_tokenId) == True
-  assert _index <= self.farmCompleteSeason[_tokenId]
+  assert _index <= self.runningSeason[_tokenId]
   return (self.seasonData[_tokenId])[_index]
 
 # @dev Farm complete season
@@ -183,5 +183,6 @@ def closeSeason(_tokenId: uint256):
   assert self.farm_registry.getTokenState(_tokenId) == 'Harvesting' # dev: is not harvesting
   assert (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply == 0 # dev: supply is not exhausted
   self.farmCompleteSeason[_tokenId] += 1
+  self.totalCompletedSeasons += 1
   self.farm_registry.transitionState(_tokenId, 'Dormant', msg.sender)
 
