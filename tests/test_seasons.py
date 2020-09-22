@@ -1,5 +1,6 @@
 import pytest
 import brownie
+from brownie import web3
 
 token_id = 4863475
 
@@ -68,19 +69,84 @@ def test_get_invalid_farm_season_data(season_contract):
     with brownie.reverts():
         season_contract.querySeasonData(3892, 1)
 
-def test_get_index_farm_season_data(season_contract):
+def test_out_of_range_season_data_index(season_contract):
 
     # Error assertions
     with brownie.reverts():
         season_contract.querySeasonData(token_id, 1)
 
-def test_query_season_data(season_contract):
+def test_season_preparation(season_contract):
+
+    season_contract.openSeason(token_id)
 
     # Assertions
+    assert season_contract.currentSeason(token_id) == 1
+
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure')
+
     total_complete_season = season_contract.currentSeason(token_id)
     season_data = list()
     for i in range(1, total_complete_season+1):
         season_data.append(season_contract.querySeasonData(token_id, i))
 
-    assert len(season_data) == 0
+    # Assertions
+    assert len(season_data) == 1
+    assert season_data[0][1] == 'Tomatoe'
+    assert season_data[0][2] == 'Organic Fertilizer'
+    assert season_data[0][3] == 'Cow Shed Manure'
 
+def test_season_planting(season_contract):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+
+    total_complete_season = season_contract.currentSeason(token_id)
+    season_data = list()
+    for i in range(1, total_complete_season+1):
+        season_data.append(season_contract.querySeasonData(token_id, i))
+
+    # Assertions
+    assert len(season_data) == 1
+    assert season_data[0][4] == 'F1'
+    assert season_data[0][5] == 'Kenya Seed Company'
+    assert season_data[0][8] == 'Kenya Seed Supplier'
+
+def test_season_crop_growth(season_contract):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+
+    total_complete_season = season_contract.currentSeason(token_id)
+    season_data = list()
+    for i in range(1, total_complete_season+1):
+        season_data.append(season_contract.querySeasonData(token_id, i))
+
+    # Assertions
+    assert len(season_data) == 1
+    assert season_data[0][9] == 'Aphids'
+    assert season_data[0][10] == 'Fertilizer Supplier'
+
+def test_season_harvesting(season_contract):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    _price = web3.toWei(1, 'ether')
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+
+    total_complete_season = season_contract.currentSeason(token_id)
+    season_data = list()
+    for i in range(1, total_complete_season+1):
+        season_data.append(season_contract.querySeasonData(token_id, i))
+
+    # Assertions
+    assert len(season_data) == 1
+    assert season_data[0][11] == 5
+    assert season_data[0][13] == 1000000000000000000
+
+def test_unrestricted_season_harvesting(season_contract):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    with brownie.reverts('dev: state is not crop growth'):
+        season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
