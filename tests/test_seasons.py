@@ -141,6 +141,7 @@ def test_season_harvesting(season_contract):
         season_data.append(season_contract.querySeasonData(token_id, i))
 
     # Assertions
+    assert season_contract.getSeasonSupply(token_id, total_complete_season) == 5
     assert len(season_data) == 1
     assert season_data[0][11] == 5
     assert season_data[0][13] == 1000000000000000000
