@@ -56,6 +56,9 @@ struct SeasonData:
 # @dev Map season data to farm
 seasonData: HashMap[uint256, HashMap[uint256, SeasonData]]
 
+# @dev Season supply
+seasonSupply: HashMap[uint256, HashMap[uint256, uint256]]
+
 # @dev Farm registry interface variable
 farm_registry: Frmregistry
 
@@ -78,6 +81,18 @@ def completeSeasons() -> uint256:
 def currentSeason(_tokenId: uint256) -> uint256:
   assert self.farm_registry.exists(_tokenId) == True
   return self.runningSeason[_tokenId]
+
+# @dev Get season supply
+# Throw if `_tokenId` is invalid
+# Throw if `_seasonNo` > `currentSeason(_tokenId)`
+# @param _tokenId Tokenized farm id
+# @param _seasonNo Season number
+@external
+@view
+def getSeasonSupply(_tokenId: uint256, _seasonNo: uint256) -> uint256:
+  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
+  assert _seasonNo <= self.runningSeason[_tokenId] # dev: season out of range
+  return (self.seasonSupply[_tokenId])[_seasonNo]
 
 # @dev Get token season
 # @param _tokenId Token ID
@@ -155,6 +170,7 @@ def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: 
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply = _harvestSupply
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestUnit = _harvestUnit
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestPrice = _unitPrice
+  (self.seasonSupply[_tokenId])[self.runningSeason[_tokenId]] = _harvestSupply
   # Transition state
   self.farm_registry.transitionState(_tokenId, 'Booking', msg.sender)
 
