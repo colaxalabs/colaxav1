@@ -56,9 +56,6 @@ struct SeasonData:
 # @dev Map season data to farm
 seasonData: HashMap[uint256, HashMap[uint256, SeasonData]]
 
-# @dev Season supply
-seasonSupply: HashMap[uint256, HashMap[uint256, uint256]]
-
 # @dev Farm registry interface variable
 farm_registry: Frmregistry
 
@@ -90,9 +87,9 @@ def currentSeason(_tokenId: uint256) -> uint256:
 @external
 @view
 def getSeasonSupply(_tokenId: uint256, _seasonNo: uint256) -> uint256:
-  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
-  assert _seasonNo <= self.runningSeason[_tokenId] # dev: season out of range
-  return (self.seasonSupply[_tokenId])[_seasonNo]
+  assert self.farm_registry.exists(_tokenId) == True
+  assert _seasonNo <= self.runningSeason[_tokenId]
+  return (self.seasonData[_tokenId])[_seasonNo].harvestSupply
 
 # @dev Get token season
 # @param _tokenId Token ID
@@ -170,7 +167,6 @@ def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: 
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply = _harvestSupply
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestUnit = _harvestUnit
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestPrice = _unitPrice
-  (self.seasonSupply[_tokenId])[self.runningSeason[_tokenId]] = _harvestSupply
   # Transition state
   self.farm_registry.transitionState(_tokenId, 'Booking', msg.sender)
 
@@ -183,6 +179,33 @@ def querySeasonData(_tokenId: uint256, _index: uint256) -> SeasonData:
   assert self.farm_registry.exists(_tokenId) == True
   assert _index <= self.runningSeason[_tokenId]
   return (self.seasonData[_tokenId])[_index]
+
+# @dev Burn season supply
+# @param _tokenId Tokenized farm ID
+# @param _seasonNo Season number
+# @param _volume Volume to burn
+# Throw if `_seasonNo > currentSeason(_tokenId)`
+# Throw if `_volume > (self.seasonData[_tokenId])[_seasonNo]`
+@external
+def burnSupply(_tokenId: uint256, _seasonNo: uint256, _volume: uint256):
+  assert self.farm_registry.getTokenState(_tokenId) == 'Harvesting' # dev: not harvesting to burn supply
+  assert _volume <= (self.seasonData[_tokenId])[_seasonNo].harvestSupply # dev: volume greater than available supply
+  assert _seasonNo <= self.runningSeason[_tokenId] # dev: season number out of range
+  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
+  (self.seasonData[_tokenId])[_seasonNo].harvestSupply -= _volume
+
+# @dev Mint season supply
+# @param _tokenId Tokenized farm ID
+# @param _seasonNo Season number
+# @param _volume Volume to burn
+# Throw if `_seasonNo > currentSeason(_tokenId)`
+# Throw if `_volume > (self.seasonSupply[_tokenId])[_seasonNo]`
+@external
+def mintSupply(_tokenId: uint256, _seasonNo: uint256, _volume: uint256):
+  assert self.farm_registry.getTokenState(_tokenId) == 'Harvesting' # dev: not harvesting to mint supply
+  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
+  assert _seasonNo <= self.runningSeason[_tokenId] # dev: season number out of range
+  (self.seasonData[_tokenId])[_seasonNo].harvestSupply += _volume
 
 # @dev Farm complete season
 # @param _tokenId Tokenized farm

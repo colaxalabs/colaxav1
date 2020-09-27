@@ -3,7 +3,6 @@
 # External Interfaces
 interface Season:
     def completeSeasons() -> uint256: view
-    def currentSeason(_tokenId: uint256) -> uint256: view
     def getSeason(_tokenId: uint256) -> String[20]: view
     def getSeasonSupply(_tokenId: uint256, _seasonNo: uint256) -> uint256: view
 
@@ -35,7 +34,8 @@ farmBookings: HashMap[uint256, HashMap[uint256, Booking]] # token => farmBooking
 
 # @dev Index all bookings to address
 totalBookerBookings: HashMap[address, uint256] # address => total number of booker bookings
-bookerBookings: HashMap[address, HashMap[uint256, Booking]] # address => totalBookerBookings[address]: index => Booking{}
+bookerBookings: HashMap[address, HashMap[uint256, Booking]] # address => seasonNo[_tokenId]: index => Booking{}
+seasonsBooked: HashMap[address, HashMap[uint256, uint256]] # seasons booked indexed by totalBookerBookings
 
 # @dev Cancelled bookings(booker)
 bookerCancellation: HashMap[address, uint256]
@@ -100,7 +100,7 @@ def getBookerBooking(_address: address, _index: uint256) -> Booking:
   assert _index <= self.totalBookerBookings[_address] # dev: out of range index
   return (self.bookerBookings[_address])[_index]
 
-# @dev Book season harvest
+# @dev Book season harvest: burn season supply
 # @dev Index booking to farm
 # @dev Index booking to booker
 # @dev Update season supply after booking
@@ -110,11 +110,13 @@ def getBookerBooking(_address: address, _index: uint256) -> Booking:
 # Throw if `getSeason(_tokenId)` != `Harvesting`
 # @param _tokenId Tokenized farm id
 # @param _volume Amount to book
+# @param _seasonNo Season number
 @external
 @payable
-def bookHarvest(_volume: uint256, _tokenId: uint256):
+def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
-  assert self.season.getSeason(_tokenId) == 'Harvesting' # dev: state should be harvesting
+  assert self.season.getSeason(_tokenId) == 'Booking' # dev: season not booking
   assert msg.sender != self.farm_registry.ownerOf(_tokenId) # dev: owner cannot book his/her harvest
-  assert _volume <= self.season.getSeasonSupply(_tokenId, self.season.currentSeason(_tokenId)) # dev: invalid booking volume
+  assert _volume != 0 # dev: volume cannot be 0
+  assert _volume <= self.season.getSeasonSupply(_tokenId, _seasonNo)
 
