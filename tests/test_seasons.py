@@ -1,6 +1,5 @@
 import pytest
 import brownie
-from brownie import web3
 
 token_id = 4863475
 
@@ -127,7 +126,7 @@ def test_season_crop_growth(season_contract):
     assert season_data[0][9] == 'Aphids'
     assert season_data[0][10] == 'Fertilizer Supplier'
 
-def test_season_harvesting(season_contract):
+def test_season_harvesting(season_contract, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
@@ -141,7 +140,6 @@ def test_season_harvesting(season_contract):
         season_data.append(season_contract.querySeasonData(token_id, i))
 
     # Assertions
-    assert season_contract.getSeasonSupply(token_id, total_complete_season) == 5
     assert len(season_data) == 1
     assert season_data[0][11] == 5
     assert season_data[0][13] == 1000000000000000000

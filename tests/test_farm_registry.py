@@ -2,7 +2,7 @@ import pytest
 
 import brownie
 
-token_id = 48983476
+token_id = 293730023
 
 @pytest.fixture
 def frmregistry_contract(FRMRegistry, accounts):
