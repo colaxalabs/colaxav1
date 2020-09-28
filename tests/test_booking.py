@@ -57,3 +57,23 @@ def test_booking_with_insufficient_fees(booking_contract, accounts):
     with brownie.reverts('dev: insufficient booking funds'):
         booking_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1]})
 
+def test_farm_harvest_booking(booking_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    booking_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': _price * 3})
+
+    # Assertions
+    assert booking_contract.totalFarmBookings(token_id) == 1
+    assert booking_contract.totalBookerBooking(accounts[1]) == 1
+
+def test_get_all_booker_bookings(booking_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    booking_contract.bookHarvest(token_id, 4, 1, {'from': accounts[1], 'value': _price * 4})
+
+    booker_bookings = list()
+    total_booker_bookings = booking_contract.totalBookerBooking(accounts[1])
+    for i in range(1, total_booker_bookings+1):
+        booker_bookings.append(booking_contract.getSeasonBooked(i, accounts[1]))
+
+    # Assertions
+    assert len(booker_bookings) == 1
+
