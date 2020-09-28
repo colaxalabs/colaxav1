@@ -199,10 +199,10 @@ def querySeasonData(_tokenId: uint256, _index: uint256) -> SeasonData:
 # Throw if `_volume > (self.seasonData[_tokenId])[_seasonNo]`
 @external
 def burnSupply(_tokenId: uint256, _seasonNo: uint256, _volume: uint256):
-  assert self.farm_registry.getTokenState(_tokenId) == 'Harvesting' # dev: not harvesting to burn supply
+  assert self.farm_registry.getTokenState(_tokenId) == 'Booking' # dev: not harvesting to burn supply
+  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
   assert _volume <= (self.seasonData[_tokenId])[_seasonNo].harvestSupply # dev: volume greater than available supply
   assert _seasonNo <= self.runningSeason[_tokenId] # dev: season number out of range
-  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
   (self.seasonData[_tokenId])[_seasonNo].harvestSupply -= _volume
 
 # @dev Mint season supply

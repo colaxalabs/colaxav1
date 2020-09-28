@@ -7,6 +7,7 @@ interface Season:
     def getSeasonSupply(_tokenId: uint256, _seasonNo: uint256) -> uint256: view
     def currentSeason(_tokenId: uint256) -> uint256: view
     def harvestPrice(_tokenId: uint256, _seasonNo: uint256) -> uint256: view
+    def burnSupply(_tokenId: uint256, _seasonNo: uint256, _volume: uint256): nonpayable
 
 interface Frmregistry:
     def exists(_tokenId: uint256) -> bool: view
@@ -72,17 +73,6 @@ def totalFarmBookings(_tokenId: uint256) -> uint256:
   assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
   return self.totalFarmBooking[_tokenId]
 
-# @dev Get farm booking
-# @param _tokenId Tokenized farm ID
-# @param _index Booking index
-# @return Booking
-@external
-@view
-def getFarmBooking(_tokenId: uint256, _index: uint256) -> Booking:
-  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
-  assert _index <= self.totalFarmBooking[_tokenId] # dev: out of range index
-  return (self.farmBookings[_tokenId])[_index]
-
 # @dev Get total booker bookings
 # @param _address Booker address
 @external
@@ -90,16 +80,6 @@ def getFarmBooking(_tokenId: uint256, _index: uint256) -> Booking:
 def totalBookerBooking(_address: address) -> uint256:
   assert _address != ZERO_ADDRESS # dev: invalid address
   return self.totalBookerBookings[_address]
-
-# @dev Get booker booking
-# @param _address Booker address
-# @param _index Booking index
-@external
-@view
-def getBookerBooking(_address: address, _index: uint256) -> Booking:
-  assert _address != ZERO_ADDRESS # dev: invalid address
-  assert _index <= self.totalBookerBookings[_address] # dev: out of range index
-  return (self.bookerBookings[_address])[_index]
 
 # @dev Book season harvest: burn season supply
 # @dev Index booking to farm
@@ -123,6 +103,7 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   assert msg.value == (self.season.harvestPrice(_tokenId, _seasonNo) * _volume) # dev: insufficient booking funds
   # Store booker bookings
   _runningSeason: uint256 = self.season.currentSeason(_tokenId)
+  self.season.burnSupply(_tokenId, _runningSeason, _volume)
   (self.bookerBookings[msg.sender])[_runningSeason] = Booking({
     volume: _volume,
     delivered: False,
@@ -136,4 +117,14 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   # Store farm bookings
   self.totalFarmBooking[_tokenId] += 1
   (self.farmBookings[_tokenId])[self.totalFarmBooking[_tokenId]] = (self.bookerBookings[msg.sender])[_runningSeason]
+
+# @dev Get seasons booked
+# @param _index Index
+# Throw if `_index > self.totalBookerBookings[msg.sender]`
+# @return uint256
+@external
+@view
+def getSeasonBooked(_index: uint256, _sender: address) -> uint256:
+  assert _index <= self.totalBookerBookings[_sender] # dev: out of range
+  return (self.seasonsBooked[_sender])[_index]
 
