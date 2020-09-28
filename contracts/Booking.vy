@@ -5,6 +5,8 @@ interface Season:
     def completeSeasons() -> uint256: view
     def getSeason(_tokenId: uint256) -> String[20]: view
     def getSeasonSupply(_tokenId: uint256, _seasonNo: uint256) -> uint256: view
+    def currentSeason(_tokenId: uint256) -> uint256: view
+    def harvestPrice(_tokenId: uint256, _seasonNo: uint256) -> uint256: view
 
 interface Frmregistry:
     def exists(_tokenId: uint256) -> bool: view
@@ -23,7 +25,6 @@ struct Booking:
   cancelled: bool
   booker: address
   deposit: uint256
-  bookedAt: uint256
 
 # @dev Total completed bookings
 totalBookings: uint256
@@ -119,4 +120,20 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   assert msg.sender != self.farm_registry.ownerOf(_tokenId) # dev: owner cannot book his/her harvest
   assert _volume != 0 # dev: volume cannot be 0
   assert _volume <= self.season.getSeasonSupply(_tokenId, _seasonNo)
+  assert msg.value == (self.season.harvestPrice(_tokenId, _seasonNo) * _volume) # dev: insufficient booking funds
+  # Store booker bookings
+  _runningSeason: uint256 = self.season.currentSeason(_tokenId)
+  (self.bookerBookings[msg.sender])[_runningSeason] = Booking({
+    volume: _volume,
+    delivered: False,
+    cancelled: False,
+    booker: msg.sender,
+    deposit: msg.value,
+  })
+  self.totalBookerBookings[msg.sender] += 1
+  # Index seasons booked
+  (self.seasonsBooked[msg.sender])[self.totalBookerBookings[msg.sender]] = _runningSeason
+  # Store farm bookings
+  self.totalFarmBooking[_tokenId] += 1
+  (self.farmBookings[_tokenId])[self.totalFarmBooking[_tokenId]] = (self.bookerBookings[msg.sender])[_runningSeason]
 

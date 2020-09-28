@@ -91,6 +91,17 @@ def getSeasonSupply(_tokenId: uint256, _seasonNo: uint256) -> uint256:
   assert _seasonNo <= self.runningSeason[_tokenId]
   return (self.seasonData[_tokenId])[_seasonNo].harvestSupply
 
+# @dev Return harvest price per unit supply
+# @param _tokenId Tokenized farm ID
+# @param _seasonNo Running season
+# @return uint256
+@external
+@view
+def harvestPrice(_tokenId: uint256, _seasonNo: uint256) -> uint256:
+  assert self.farm_registry.exists(_tokenId) == True
+  assert _seasonNo <= self.runningSeason[_tokenId]
+  return (self.seasonData[_tokenId])[_seasonNo].harvestPrice
+
 # @dev Get token season
 # @param _tokenId Token ID
 # @return String
