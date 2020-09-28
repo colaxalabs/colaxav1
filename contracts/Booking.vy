@@ -103,19 +103,21 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   assert msg.value == (self.season.harvestPrice(_tokenId, _seasonNo) * _volume) # dev: insufficient booking funds
   # Store booker bookings
   _runningSeason: uint256 = self.season.currentSeason(_tokenId)
+  previousVolume: uint256 = (self.bookerBookings[msg.sender])[_runningSeason].volume
+  (self.bookerBookings[msg.sender])[_runningSeason].volume += _volume
+  (self.bookerBookings[msg.sender])[_runningSeason].delivered = False
+  (self.bookerBookings[msg.sender])[_runningSeason].cancelled = False
+  (self.bookerBookings[msg.sender])[_runningSeason].deposit += msg.value
+  (self.bookerBookings[msg.sender])[_runningSeason].booker = msg.sender
   self.season.burnSupply(_tokenId, _runningSeason, _volume)
-  (self.bookerBookings[msg.sender])[_runningSeason] = Booking({
-    volume: _volume,
-    delivered: False,
-    cancelled: False,
-    booker: msg.sender,
-    deposit: msg.value,
-  })
-  self.totalBookerBookings[msg.sender] += 1
+  # Increment booker total bookings
+  if previousVolume == 0:
+    self.totalBookerBookings[msg.sender] += 1
   # Index seasons booked
   (self.seasonsBooked[msg.sender])[self.totalBookerBookings[msg.sender]] = _runningSeason
   # Store farm bookings
-  self.totalFarmBooking[_tokenId] += 1
+  if previousVolume == 0:
+    self.totalFarmBooking[_tokenId] += 1
   (self.farmBookings[_tokenId])[self.totalFarmBooking[_tokenId]] = (self.bookerBookings[msg.sender])[_runningSeason]
 
 # @dev Get seasons booked
@@ -127,4 +129,13 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
 def getSeasonBooked(_index: uint256, _sender: address) -> uint256:
   assert _index <= self.totalBookerBookings[_sender] # dev: out of range
   return (self.seasonsBooked[_sender])[_index]
+
+# @dev Get booker booking
+# @param _index Index
+# @param _booker Booker address
+@external
+@view
+def getBookerBooking(_seasonIndex: uint256, _booker: address) -> Booking:
+  assert _booker != ZERO_ADDRESS
+  return (self.bookerBookings[_booker])[_seasonIndex]
 
