@@ -32,7 +32,7 @@ totalBookings: uint256
 
 # @dev Index all bookings to tokenized farm
 totalFarmBooking: HashMap[uint256, uint256] # token => total number of farm bookings
-farmBookings: HashMap[uint256, HashMap[uint256, Booking]] # token => farmBooking[token]: index => Booking{}
+farmBookings: HashMap[uint256, HashMap[uint256, Booking]] # token => totalFarmBooking[token]: index => Booking{}
 
 # @dev Index all bookings to address
 totalBookerBookings: HashMap[address, uint256] # address => total number of booker bookings
@@ -138,4 +138,14 @@ def getSeasonBooked(_index: uint256, _sender: address) -> uint256:
 def getBookerBooking(_seasonIndex: uint256, _booker: address) -> Booking:
   assert _booker != ZERO_ADDRESS
   return (self.bookerBookings[_booker])[_seasonIndex]
+
+# @dev Query farm bookings
+# @param _tokenId Tokenized farm ID
+# @param _index Index
+@external
+@view
+def getFarmBooking(_tokenId: uint256, _index: uint256) -> Booking:
+  assert self.farm_registry.exists(_tokenId) == True
+  assert _index <= self.totalFarmBooking[_tokenId]
+  return (self.farmBookings[_tokenId])[_index]
 
