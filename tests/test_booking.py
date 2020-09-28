@@ -83,3 +83,16 @@ def test_get_all_booker_bookings(booking_contract, accounts, web3):
     expected_price = web3.toWei(3, 'ether')
     assert booker_bookings[0][4] == expected_price
 
+def test_get_all_farm_bookings(booking_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    booking_contract.bookHarvest(token_id, 2, 1, {'from': accounts[1], 'value': _price * 2})
+    booking_contract.bookHarvest(token_id, 1, 1, {'from': accounts[1], 'value': _price * 1})
+    booking_contract.bookHarvest(token_id, 1, 1, {'from': accounts[1], 'value': _price * 1})
+
+    total_farm_bookings = booking_contract.totalFarmBookings(token_id)
+    farm_bookings = list()
+    for i in range(1, total_farm_bookings+1):
+        farm_bookings.append(booking_contract.getFarmBooking(token_id, i))
+
+    assert len(farm_bookings) == 1
+
