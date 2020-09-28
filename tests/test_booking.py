@@ -51,3 +51,9 @@ def test_booking_with_invalid_season(booking_contract, accounts):
     with brownie.reverts():
         booking_contract.bookHarvest(token_id, 3, 10, {'from': accounts[1]})
 
+def test_booking_with_insufficient_fees(booking_contract, accounts):
+
+    # Error assertions
+    with brownie.reverts('dev: insufficient booking funds'):
+        booking_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1]})
+
