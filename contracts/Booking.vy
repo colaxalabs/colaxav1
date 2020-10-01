@@ -16,6 +16,9 @@ interface Frmregistry:
 # @dev Farm registry contract
 farm_registry: Frmregistry
 
+# @dev Service provider
+SERVICE_PROVIDER: constant(address) = 0x4958847c3AFa23a8c4010F0143196b343451D5BF
+
 # @dev Season contract
 season: Season
 
@@ -81,6 +84,35 @@ def totalBookerBooking(_address: address) -> uint256:
   assert _address != ZERO_ADDRESS # dev: invalid address
   return self.totalBookerBookings[_address]
 
+# @dev Get seasons booked
+# @param _index Index
+# Throw if `_index > self.totalBookerBookings[msg.sender]`
+# @return uint256
+@external
+@view
+def getSeasonBooked(_index: uint256, _sender: address) -> uint256:
+  assert _index <= self.totalBookerBookings[_sender] # dev: out of range
+  return (self.seasonsBooked[_sender])[_index]
+
+# @dev Get booker booking
+# @param _index Index
+# @param _booker Booker address
+@external
+@view
+def getBookerBooking(_seasonIndex: uint256, _booker: address) -> Booking:
+  assert _booker != ZERO_ADDRESS
+  return (self.bookerBookings[_booker])[_seasonIndex]
+
+# @dev Query farm bookings
+# @param _tokenId Tokenized farm ID
+# @param _index Index
+@external
+@view
+def getFarmBooking(_tokenId: uint256, _index: uint256) -> Booking:
+  assert self.farm_registry.exists(_tokenId) == True
+  assert _index <= self.totalFarmBooking[_tokenId]
+  return (self.farmBookings[_tokenId])[_index]
+
 # @dev Book season harvest: burn season supply
 # @dev Index booking to farm
 # @dev Index booking to booker
@@ -119,33 +151,4 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   if previousVolume == 0:
     self.totalFarmBooking[_tokenId] += 1
   (self.farmBookings[_tokenId])[self.totalFarmBooking[_tokenId]] = (self.bookerBookings[msg.sender])[_runningSeason]
-
-# @dev Get seasons booked
-# @param _index Index
-# Throw if `_index > self.totalBookerBookings[msg.sender]`
-# @return uint256
-@external
-@view
-def getSeasonBooked(_index: uint256, _sender: address) -> uint256:
-  assert _index <= self.totalBookerBookings[_sender] # dev: out of range
-  return (self.seasonsBooked[_sender])[_index]
-
-# @dev Get booker booking
-# @param _index Index
-# @param _booker Booker address
-@external
-@view
-def getBookerBooking(_seasonIndex: uint256, _booker: address) -> Booking:
-  assert _booker != ZERO_ADDRESS
-  return (self.bookerBookings[_booker])[_seasonIndex]
-
-# @dev Query farm bookings
-# @param _tokenId Tokenized farm ID
-# @param _index Index
-@external
-@view
-def getFarmBooking(_tokenId: uint256, _index: uint256) -> Booking:
-  assert self.farm_registry.exists(_tokenId) == True
-  assert _index <= self.totalFarmBooking[_tokenId]
-  return (self.farmBookings[_tokenId])[_index]
 
