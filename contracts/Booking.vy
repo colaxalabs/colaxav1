@@ -49,10 +49,10 @@ bookerCancellation: HashMap[address, uint256]
 tokenizedFarmCancellation: HashMap[uint256, uint256]
 
 # @dev Delivered bookings(booker)
-bookerDelivered: HashMap[address, uint256]
+bookerDelivery: HashMap[address, uint256]
 
 # @dev Delivered bookings(tokenized farm)
-tokenizedFarmDelivered: HashMap[uint256, uint256]
+tokenizedFarmDelivery: HashMap[uint256, uint256]
 
 # @dev Season bookings(for analytics)
 seasonalBookings: HashMap[uint256, uint256] # season => number of season bookings
@@ -103,7 +103,7 @@ def getBookerBooking(_seasonIndex: uint256, _booker: address) -> Booking:
   assert _booker != ZERO_ADDRESS
   return (self.bookerBookings[_booker])[_seasonIndex]
 
-# @dev Query farm bookings
+# @dev Query farm booking
 # @param _tokenId Tokenized farm ID
 # @param _index Index
 @external
@@ -112,6 +112,42 @@ def getFarmBooking(_tokenId: uint256, _index: uint256) -> Booking:
   assert self.farm_registry.exists(_tokenId) == True
   assert _index <= self.totalFarmBooking[_tokenId]
   return (self.farmBookings[_tokenId])[_index]
+
+# @dev Get booker total delivery
+# @param _address Booker address
+# Throw if `_address == ZERO_ADDRESS`
+@external
+@view
+def totalBookingDeliveredForBooker(_address: address) -> uint256:
+  assert _address != ZERO_ADDRESS
+  return self.bookerDelivery[_address]
+
+# @dev Get farm total delivery
+# @param _tokenId Tokenized farm ID
+# Throw if `_tokenId == False`
+@external
+@view
+def totalBookingDeliveredForFarm(_tokenId: uint256) -> uint256:
+  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
+  return self.tokenizedFarmDelivery[_tokenId]
+
+# @dev Get total cancellation for booker
+# @param _address Booker address
+# Throw if `_address == ZERO_ADDRESS`
+@external
+@view
+def totalCancellationForBooker(_address: address) -> uint256:
+  assert _address != ZERO_ADDRESS # dev: invalid address
+  return self.bookerCancellation[_address]
+
+# @dev Get total cancellation for tokenized farm
+# @param _tokenId Tokenized farm id
+# Throw if `_tokenId == False`
+@external
+@view
+def totalCancellationForFarm(_tokenId: uint256) -> uint256:
+  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
+  return self.tokenizedFarmCancellation[_tokenId]
 
 # @dev Book season harvest: burn season supply
 # @dev Index booking to farm
