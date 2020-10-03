@@ -14,10 +14,7 @@ interface Frmregistry:
     def ownerOf(_tokenId: uint256) -> address: view
 
 # @dev Farm registry contract
-farm_registry: Frmregistry
-
-# @dev Service provider
-SERVICE_PROVIDER: constant(address) = 0x4958847c3AFa23a8c4010F0143196b343451D5BF
+farmContract: Frmregistry
 
 # @dev Season contract
 season: Season
@@ -42,25 +39,13 @@ totalBookerBookings: HashMap[address, uint256] # address => total number of book
 bookerBookings: HashMap[address, HashMap[uint256, Booking]] # address => seasonNo[_tokenId]: index => Booking{}
 seasonsBooked: HashMap[address, HashMap[uint256, uint256]] # seasons booked indexed by totalBookerBookings
 
-# @dev Cancelled bookings(booker)
-bookerCancellation: HashMap[address, uint256]
-
-# @dev Cancelled bookings(tokenized farm)
-tokenizedFarmCancellation: HashMap[uint256, uint256]
-
-# @dev Delivered bookings(booker)
-bookerDelivery: HashMap[address, uint256]
-
-# @dev Delivered bookings(tokenized farm)
-tokenizedFarmDelivery: HashMap[uint256, uint256]
-
 # @dev Season bookings(for analytics)
 seasonalBookings: HashMap[uint256, uint256] # season => number of season bookings
 
 @external
-def __init__(farm_contract_address: address, season_contract_address: address):
-  self.farm_registry = Frmregistry(farm_contract_address)
-  self.season = Season(season_contract_address)
+def __init__(farm_contract_address: address, seasonContract_address: address):
+  self.farmContract = Frmregistry(farm_contract_address)
+  self.season = Season(seasonContract_address)
 
 # @dev Return total completed bookings
 @external
@@ -73,7 +58,7 @@ def totalBooking() -> uint256:
 @external
 @view
 def totalFarmBookings(_tokenId: uint256) -> uint256:
-  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   return self.totalFarmBooking[_tokenId]
 
 # @dev Get total booker bookings
@@ -103,51 +88,24 @@ def getBookerBooking(_seasonIndex: uint256, _booker: address) -> Booking:
   assert _booker != ZERO_ADDRESS
   return (self.bookerBookings[_booker])[_seasonIndex]
 
+# @dev Get booker volume
+# @param _booker Booker address
+# @param _seasonNo Season number
+@external
+@view
+def bookerVolume(_booker: address, _seasonNo: uint256) -> uint256:
+  assert _booker == ZERO_ADDRESS
+  return (self.bookerBookings[_booker])[_seasonNo].volume
+
 # @dev Query farm booking
 # @param _tokenId Tokenized farm ID
 # @param _index Index
 @external
 @view
 def getFarmBooking(_tokenId: uint256, _index: uint256) -> Booking:
-  assert self.farm_registry.exists(_tokenId) == True
+  assert self.farmContract.exists(_tokenId) == True
   assert _index <= self.totalFarmBooking[_tokenId]
   return (self.farmBookings[_tokenId])[_index]
-
-# @dev Get booker total delivery
-# @param _address Booker address
-# Throw if `_address == ZERO_ADDRESS`
-@external
-@view
-def totalBookingDeliveredForBooker(_address: address) -> uint256:
-  assert _address != ZERO_ADDRESS
-  return self.bookerDelivery[_address]
-
-# @dev Get farm total delivery
-# @param _tokenId Tokenized farm ID
-# Throw if `_tokenId == False`
-@external
-@view
-def totalBookingDeliveredForFarm(_tokenId: uint256) -> uint256:
-  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
-  return self.tokenizedFarmDelivery[_tokenId]
-
-# @dev Get total cancellation for booker
-# @param _address Booker address
-# Throw if `_address == ZERO_ADDRESS`
-@external
-@view
-def totalCancellationForBooker(_address: address) -> uint256:
-  assert _address != ZERO_ADDRESS # dev: invalid address
-  return self.bookerCancellation[_address]
-
-# @dev Get total cancellation for tokenized farm
-# @param _tokenId Tokenized farm id
-# Throw if `_tokenId == False`
-@external
-@view
-def totalCancellationForFarm(_tokenId: uint256) -> uint256:
-  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
-  return self.tokenizedFarmCancellation[_tokenId]
 
 # @dev Book season harvest: burn season supply
 # @dev Index booking to farm
@@ -163,9 +121,9 @@ def totalCancellationForFarm(_tokenId: uint256) -> uint256:
 @external
 @payable
 def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
-  assert self.farm_registry.exists(_tokenId) == True # dev: invalid token id
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert self.season.getSeason(_tokenId) == 'Booking' # dev: season not booking
-  assert msg.sender != self.farm_registry.ownerOf(_tokenId) # dev: owner cannot book his/her harvest
+  assert msg.sender != self.farmContract.ownerOf(_tokenId) # dev: owner cannot book his/her harvest
   assert _volume != 0 # dev: volume cannot be 0
   assert _volume <= self.season.getSeasonSupply(_tokenId, _seasonNo)
   assert msg.value == (self.season.harvestPrice(_tokenId, _seasonNo) * _volume) # dev: insufficient booking funds
