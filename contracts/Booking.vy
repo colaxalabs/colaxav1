@@ -65,7 +65,7 @@ def __init__(farm_contract_address: address, season_contract_address: address):
 # @dev Return total completed bookings
 @external
 @view
-def completedBookings() -> uint256:
+def totalBooking() -> uint256:
   return self.totalBookings
 
 # @dev Return farm total bookings
