@@ -19,7 +19,7 @@ def booking_contract(Booking, FRMRegistry, Season, web3, accounts):
 def test_initial_state(booking_contract):
 
     # Assertions
-    booking_contract.completedBookings() == 0
+    booking_contract.totalBooking() == 0
 
 def test_unrestricted_owner_booking_his_her_harvest(booking_contract):
 
