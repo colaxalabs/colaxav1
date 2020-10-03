@@ -5,16 +5,16 @@ token_id = 119292438
 
 @pytest.fixture
 def booking_contract(Booking, FRMRegistry, Season, web3, accounts):
-    farm_registry = FRMRegistry.deploy({'from': accounts[0]})
-    season_contract = Season.deploy(farm_registry.address, {'from': accounts[0]})
-    farm_registry.tokenizeLand('Arunga Vineyard', '294.32ha', '36.389223', '-1.282883', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
-    season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    farmContract = FRMRegistry.deploy({'from': accounts[0]})
+    seasonContract = Season.deploy(farmContract.address, {'from': accounts[0]})
+    farmContract.tokenizeLand('Arunga Vineyard', '294.32ha', '36.389223', '-1.282883', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
+    seasonContract.openSeason(token_id)
+    seasonContract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    seasonContract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    seasonContract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
-    yield Booking.deploy(farm_registry.address, season_contract.address, {'from': accounts[0]})
+    seasonContract.confirmHarvesting(token_id, 5, 'kg', _price)
+    yield Booking.deploy(farmContract.address, seasonContract.address, {'from': accounts[0]})
 
 def test_initial_state(booking_contract):
 
