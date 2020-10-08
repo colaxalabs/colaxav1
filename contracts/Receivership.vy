@@ -32,7 +32,7 @@ bookerDelivery: HashMap[address, uint256]
 tokenizedFarmDelivery: HashMap[uint256, uint256]
 
 @external
-def __init__(bookingContract_address: address,farmContract_address: address):
+def __init__(bookingContract_address: address, farmContract_address: address):
   self.bookingContract = Booking(bookingContract_address)
   self.farmContract = Frmregistry(farmContract_address)
 
