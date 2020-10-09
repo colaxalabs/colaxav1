@@ -13,6 +13,9 @@ interface Frmregistry:
     def exists(_tokenId: uint256) -> bool: view
     def ownerOf(_tokenId: uint256) -> address: view
 
+# @dev Service provider
+SERVICE_PROVIDER: constant(address) = 0x4958847c3AFa23a8c4010F0143196b343451D5BF
+
 # @dev Farm registry contract
 farmContract: Frmregistry
 
@@ -20,7 +23,7 @@ farmContract: Frmregistry
 season: Season
 
 # Booking type
-struct Booking:
+struct BookingType:
   volume: uint256
   delivered: bool
   cancelled: bool
@@ -32,11 +35,11 @@ totalBookings: uint256
 
 # @dev Index all bookings to tokenized farm
 totalFarmBooking: HashMap[uint256, uint256] # token => total number of farm bookings
-farmBookings: HashMap[uint256, HashMap[uint256, Booking]] # token => totalFarmBooking[token]: index => Booking{}
+farmBookings: HashMap[uint256, HashMap[uint256, BookingType]] # token => totalFarmBooking[token]: index => Booking{}
 
 # @dev Index all bookings to address
 totalBookerBookings: HashMap[address, uint256] # address => total number of booker bookings
-bookerBookings: HashMap[address, HashMap[uint256, Booking]] # address => seasonNo[_tokenId]: index => Booking{}
+bookerBookings: HashMap[address, HashMap[uint256, BookingType]] # address => seasonNo[_tokenId]: index => Booking{}
 seasonsBooked: HashMap[address, HashMap[uint256, uint256]] # seasons booked indexed by totalBookerBookings
 
 # @dev Season bookings(for analytics)
@@ -84,7 +87,7 @@ def getSeasonBooked(_index: uint256, _sender: address) -> uint256:
 # @param _booker Booker address
 @external
 @view
-def getBookerBooking(_seasonIndex: uint256, _booker: address) -> Booking:
+def getBookerBooking(_seasonIndex: uint256, _booker: address) -> BookingType:
   assert _booker != ZERO_ADDRESS
   return (self.bookerBookings[_booker])[_seasonIndex]
 
@@ -102,7 +105,7 @@ def bookerVolume(_booker: address, _seasonNo: uint256) -> uint256:
 # @param _index Index
 @external
 @view
-def getFarmBooking(_tokenId: uint256, _index: uint256) -> Booking:
+def getFarmBooking(_tokenId: uint256, _index: uint256) -> BookingType:
   assert self.farmContract.exists(_tokenId) == True
   assert _index <= self.totalFarmBooking[_tokenId]
   return (self.farmBookings[_tokenId])[_index]
@@ -145,4 +148,28 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   if previousVolume == 0:
     self.totalFarmBooking[_tokenId] += 1
   (self.farmBookings[_tokenId])[self.totalFarmBooking[_tokenId]] = (self.bookerBookings[msg.sender])[_runningSeason]
+
+# @dev Burn booking
+# @param _tokenId Tokenized farm id
+# @param _booker Booker address
+# @param _seasonNo Season number
+# Throw if `(bookerBookings[_booker])[_seasonNo].volume == 0`
+# Throw if `_seasonNo > self.season.currentSeason(_tokenId)`
+# Throw if `self.farm_registry.exists(_tokenId) == False`
+# Throw if `_volume != 0`
+@external
+def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256):
+  assert _volume != 0 # dev: volume cannot be 0
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
+  assert (self.bookerBookings[_booker])[_seasonNo].volume != 0 # dev: no bookings
+  assert _seasonNo <= self.season.currentSeason(_tokenId) # dev: invalid season
+  (self.bookerBookings[_booker])[_seasonNo].volume -= _volume
+  burningDeposit: uint256 = self.season.harvestPrice(_tokenId, _seasonNo) * _volume
+  (self.bookerBookings[_booker])[_seasonNo].deposit -= burningDeposit
+  # Calculate provider fee
+  providerFee: uint256 = burningDeposit * (3/100)
+  send(SERVICE_PROVIDER, providerFee) # Transfer fees
+  # Calculate farm overdues
+  farmerOverdues: uint256 = burningDeposit - providerFee
+  send(self.farmContract.ownerOf(_tokenId), farmerOverdues) # Transfer overdues
 

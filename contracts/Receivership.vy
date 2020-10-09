@@ -5,13 +5,8 @@ interface Frmregistry:
     def exists(_tokenId: uint256) -> bool: view
 
 interface Booking:
+  def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256): nonpayable
   def bookerVolume(_booker: address, _seasonNo: uint256) -> uint256: view
-
-# @dev Service provider
-SERVICE_PROVIDER: constant(address) = 0x4958847c3AFa23a8c4010F0143196b343451D5BF
-
-# @dev Service provider fee
-SERVICE_PROVIDER_FEE: constant(decimal) = 0.30
 
 # @dev Booking contract
 bookingContract: Booking
