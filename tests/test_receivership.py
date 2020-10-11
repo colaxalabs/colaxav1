@@ -17,7 +17,6 @@ def receivership_contract(Booking, FRMRegistry, Receivership, Season, accounts, 
     seasonContract.confirmHarvesting(token_id, 5, 'kg', _price)
     bookingContract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
     yield Receivership.deploy(bookingContract.address, farmContract.address, {'from': accounts[0]})
-
 def test_initial_state(receivership_contract, accounts):
 
     # Assertions
@@ -28,17 +27,29 @@ def test_invalid_token_id_receivership(receivership_contract, accounts):
 
     # Error assertions
     with brownie.reverts('dev: invalid token id'):
-        receivership_contract.confirmReceivership(32393842, 2, 1, {'from': accounts[1]})
+        receivership_contract.confirmReceivership(32393842, 2, 1, accounts[2], accounts[0], {'from': accounts[1]})
 
 def test_zero_booker_volume_receivership(receivership_contract, accounts):
 
     # Error assertions
     with brownie.reverts('dev: no bookings'):
-        receivership_contract.confirmReceivership(token_id, 3, 1, {'from': accounts[3]})
+        receivership_contract.confirmReceivership(token_id, 3, 1, accounts[2], accounts[0], {'from': accounts[3]})
 
 def test_invalid_booker_volume_receivership(receivership_contract, accounts):
 
     # Error assertions
     with brownie.reverts():
-        receivership_contract.confirmReceivership(token_id, 6, 1, {'from': accounts[1]})
+        receivership_contract.confirmReceivership(token_id, 6, 1, accounts[2], accounts[0], {'from': accounts[1]})
+
+def test_confirm_harvest_booking_receivership(receivership_contract, accounts):
+    prev_beneficiary_balance = accounts[2].balance()
+    prev_farm_dues = accounts[0].balance()
+
+    receivership_contract.confirmReceivership(token_id, 1, 1, accounts[2], accounts[0], {'from': accounts[1]})
+
+    current_beneficiary_balance = accounts[2].balance()
+    current_farm_dues = accounts[0].balance()
+
+    assert prev_beneficiary_balance != current_beneficiary_balance
+    assert prev_farm_dues != current_farm_dues
 
