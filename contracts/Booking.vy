@@ -97,7 +97,7 @@ def getBookerBooking(_seasonIndex: uint256, _booker: address) -> BookingType:
 @external
 @view
 def bookerVolume(_booker: address, _seasonNo: uint256) -> uint256:
-  assert _booker == ZERO_ADDRESS
+  assert _booker != ZERO_ADDRESS
   return (self.bookerBookings[_booker])[_seasonNo].volume
 
 # @dev Query farm booking
@@ -153,12 +153,13 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
 # @param _tokenId Tokenized farm id
 # @param _booker Booker address
 # @param _seasonNo Season number
+# @param _beneficiary Farm owner is the beneficiary
 # Throw if `(bookerBookings[_booker])[_seasonNo].volume == 0`
 # Throw if `_seasonNo > self.season.currentSeason(_tokenId)`
 # Throw if `self.farm_registry.exists(_tokenId) == False`
 # Throw if `_volume != 0`
 @external
-def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256):
+def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256, _beneficiary: address, _farmer: address):
   assert _volume != 0 # dev: volume cannot be 0
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert (self.bookerBookings[_booker])[_seasonNo].volume != 0 # dev: no bookings
@@ -166,10 +167,10 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
   (self.bookerBookings[_booker])[_seasonNo].volume -= _volume
   burningDeposit: uint256 = self.season.harvestPrice(_tokenId, _seasonNo) * _volume
   (self.bookerBookings[_booker])[_seasonNo].deposit -= burningDeposit
+  # Calculate farm overdues after 3% fee
+  farmOverdues: uint256 = burningDeposit - as_wei_value(0.00037, 'ether')
+  send(_farmer, farmOverdues) # Transfer overdues
   # Calculate provider fee
-  providerFee: uint256 = burningDeposit * (3/100)
-  send(SERVICE_PROVIDER, providerFee) # Transfer fees
-  # Calculate farm overdues
-  farmerOverdues: uint256 = burningDeposit - providerFee
-  send(self.farmContract.ownerOf(_tokenId), farmerOverdues) # Transfer overdues
+  providerFee: uint256 = burningDeposit - farmOverdues
+  send(_beneficiary, providerFee) # Transfer fees
 

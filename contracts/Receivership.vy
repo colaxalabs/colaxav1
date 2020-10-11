@@ -5,7 +5,7 @@ interface Frmregistry:
     def exists(_tokenId: uint256) -> bool: view
 
 interface Booking:
-  def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256): nonpayable
+  def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256, _provider: address, _farmer: address): nonpayable
   def bookerVolume(_booker: address, _seasonNo: uint256) -> uint256: view
 
 # @dev Booking contract
@@ -71,13 +71,15 @@ def totalCancellationForFarm(_tokenId: uint256) -> uint256:
 # @param _tokenId Tokenized farm id
 # @param _volume Booking volume to cancel
 # @param _seasonNo Season number
+# @param _provider Service provider
 # Throw if `_volume > (bookerBooking[msg.sender])[_seasonNo].volume`
 # Throw if `_volume == 0`
 # Throw if `registryInterface.exists(_tokenId) == False`
 # Throw if `_seasonNo > seasonInterface.currentSeason(_tokenId)`
 @external
-def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
+def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _provider: address, _farmer: address):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert self.bookingContract.bookerVolume(msg.sender, _seasonNo) != 0 # dev: no bookings
   assert _volume <= self.bookingContract.bookerVolume(msg.sender, _seasonNo)
+  self.bookingContract.burnBooking(_tokenId, msg.sender, _seasonNo, _volume, _provider, _farmer)
 
