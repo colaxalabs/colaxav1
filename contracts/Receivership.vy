@@ -20,16 +20,26 @@ bookerCancellation: HashMap[address, uint256]
 # @dev Cancelled bookings(tokenized farm)
 tokenizedFarmCancellation: HashMap[uint256, uint256]
 
-# @dev Delivered bookings(booker)
+# @dev Total completed delivery
+completedDelivery: uint256
+
+# @dev Delivered bookings for booker
 bookerDelivery: HashMap[address, uint256]
 
-# @dev Delivered bookings(tokenized farm)
+# @dev Delivered bookings for tokenized farm
 tokenizedFarmDelivery: HashMap[uint256, uint256]
 
 @external
 def __init__(bookingContract_address: address, farmContract_address: address):
   self.bookingContract = Booking(bookingContract_address)
   self.farmContract = Frmregistry(farmContract_address)
+
+# @dev Get total completed delivery/receivership
+# @return uint256
+@external
+@view
+def totalReceivership() -> uint256:
+  return self.completedDelivery
 
 # @dev Get booker total delivery
 # @param _address Booker address
@@ -82,4 +92,10 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
   assert self.bookingContract.bookerVolume(msg.sender, _seasonNo) != 0 # dev: no bookings
   assert _volume <= self.bookingContract.bookerVolume(msg.sender, _seasonNo)
   self.bookingContract.burnBooking(_tokenId, msg.sender, _seasonNo, _volume, _provider, _farmer)
+  # Update delivered booking for booker
+  self.bookerDelivery[msg.sender] += 1
+  # Update delivered booking for farm
+  self.tokenizedFarmDelivery[_tokenId] += 1
+  # Update total receivership
+  self.completedDelivery += 1
 
