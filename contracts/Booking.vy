@@ -91,6 +91,15 @@ def getBookerBooking(_seasonIndex: uint256, _booker: address) -> BookingType:
   assert _booker != ZERO_ADDRESS
   return (self.bookerBookings[_booker])[_seasonIndex]
 
+# @dev Get booker deposit
+# @param _booker Booker address
+# @param _seasonNo Season number
+@external
+@view
+def bookerDeposit(_booker: address, _seasonNo: uint256) -> uint256:
+  assert _booker != ZERO_ADDRESS
+  return (self.bookerBookings[_booker])[_seasonNo].deposit
+
 # @dev Get booker volume
 # @param _booker Booker address
 # @param _seasonNo Season number
@@ -164,7 +173,9 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert (self.bookerBookings[_booker])[_seasonNo].volume != 0 # dev: no bookings
   assert _seasonNo <= self.season.currentSeason(_tokenId) # dev: invalid season
+  # Update booker volume
   (self.bookerBookings[_booker])[_seasonNo].volume -= _volume
+  # Update booker deposit
   burningDeposit: uint256 = self.season.harvestPrice(_tokenId, _seasonNo) * _volume
   (self.bookerBookings[_booker])[_seasonNo].deposit -= burningDeposit
   # Calculate farm overdues after 3% fee

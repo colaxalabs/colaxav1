@@ -7,6 +7,12 @@ interface Frmregistry:
 interface Booking:
   def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256, _provider: address, _farmer: address): nonpayable
   def bookerVolume(_booker: address, _seasonNo: uint256) -> uint256: view
+  def bookerDeposit(_booker: address, _seasonNo: uint256) -> uint256: view
+
+# Events
+event Receivership:
+  volume: uint256
+  deposit: uint256
 
 # @dev Booking contract
 bookingContract: Booking
@@ -98,4 +104,6 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
   self.tokenizedFarmDelivery[_tokenId] += 1
   # Update total receivership
   self.completedDelivery += 1
+  # Log event
+  log Receivership(self.bookingContract.bookerVolume(msg.sender, _seasonNo), self.bookingContract.bookerDeposit(msg.sender, _seasonNo))
 
