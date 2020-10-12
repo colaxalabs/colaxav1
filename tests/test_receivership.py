@@ -50,6 +50,9 @@ def test_confirm_harvest_booking_receivership(receivership_contract, accounts):
     current_beneficiary_balance = accounts[2].balance()
     current_farm_dues = accounts[0].balance()
 
+    assert receivership_contract.totalBookingDeliveredForBooker(accounts[1]) == 1
+    assert receivership_contract.totalBookingDeliveredForFarm(token_id) == 1
+    assert receivership_contract.totalReceivership() == 1
     assert prev_beneficiary_balance != current_beneficiary_balance
     assert prev_farm_dues != current_farm_dues
 
