@@ -41,15 +41,18 @@ def test_invalid_booker_volume_receivership(receivership_contract, accounts):
     with brownie.reverts():
         receivership_contract.confirmReceivership(token_id, 6, 1, accounts[2], accounts[0], {'from': accounts[1]})
 
-def test_confirm_harvest_booking_receivership(receivership_contract, accounts):
+def test_confirm_harvest_booking_receivership(receivership_contract, accounts, web3):
     prev_beneficiary_balance = accounts[2].balance()
     prev_farm_dues = accounts[0].balance()
 
-    receivership_contract.confirmReceivership(token_id, 1, 1, accounts[2], accounts[0], {'from': accounts[1]})
+    tx = receivership_contract.confirmReceivership(token_id, 1, 1, accounts[2], accounts[0], {'from': accounts[1]})
 
     current_beneficiary_balance = accounts[2].balance()
     current_farm_dues = accounts[0].balance()
 
+    assert len(tx.events) == 1
+    assert tx.events[0]['volume'] == 4
+    assert tx.events[0]['deposit'] == web3.toWei(4, 'ether')
     assert receivership_contract.totalBookingDeliveredForBooker(accounts[1]) == 1
     assert receivership_contract.totalBookingDeliveredForFarm(token_id) == 1
     assert receivership_contract.totalReceivership() == 1
