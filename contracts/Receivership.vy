@@ -14,17 +14,15 @@ event Receivership:
   volume: uint256
   deposit: uint256
 
+event Cancellation:
+  volume: uint256
+  deposit: uint256
+
 # @dev Booking contract
 bookingContract: Booking
 
 # Farm registry contract
 farmContract: Frmregistry
-
-# @dev Cancelled bookings(booker)
-bookerCancellation: HashMap[address, uint256]
-
-# @dev Cancelled bookings(tokenized farm)
-tokenizedFarmCancellation: HashMap[uint256, uint256]
 
 # @dev Total completed delivery
 completedDelivery: uint256
@@ -65,29 +63,12 @@ def totalBookingDeliveredForFarm(_tokenId: uint256) -> uint256:
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   return self.tokenizedFarmDelivery[_tokenId]
 
-# @dev Get total cancellation for booker
-# @param _address Booker address
-# Throw if `_address == ZERO_ADDRESS`
-@external
-@view
-def totalCancellationForBooker(_address: address) -> uint256:
-  assert _address != ZERO_ADDRESS # dev: invalid address
-  return self.bookerCancellation[_address]
-
-# @dev Get total cancellation for tokenized farm
-# @param _tokenId Tokenized farm id
-# Throw if `_tokenId == False`
-@external
-@view
-def totalCancellationForFarm(_tokenId: uint256) -> uint256:
-  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
-  return self.tokenizedFarmCancellation[_tokenId]
-
 # @dev Confirm receivership
 # @param _tokenId Tokenized farm id
-# @param _volume Booking volume to cancel
+# @param _volume Booking volume to confirm
 # @param _seasonNo Season number
 # @param _provider Service provider
+# @param _farmer Farm beneficiary
 # Throw if `_volume > (bookerBooking[msg.sender])[_seasonNo].volume`
 # Throw if `_volume == 0`
 # Throw if `registryInterface.exists(_tokenId) == False`
