@@ -286,7 +286,7 @@ def test_invalid_token_id_receivership(season_contract, accounts, web3):
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
     # Error assertions
     with brownie.reverts('dev: invalid token id'):
-        season_contract.confirmReceivership(32393842, 2, 1, accounts[2], accounts[0], {'from': accounts[1]})
+        season_contract.confirmReceivership(32393842, 2, 1, accounts[0], {'from': accounts[1]})
 #
 def test_zero_booker_volume_receivership(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
@@ -298,7 +298,7 @@ def test_zero_booker_volume_receivership(season_contract, accounts, web3):
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
     # Error assertions
     with brownie.reverts('dev: no bookings'):
-        season_contract.confirmReceivership(token_id, 3, 1, accounts[2], accounts[0], {'from': accounts[3]})
+        season_contract.confirmReceivership(token_id, 3, 1, accounts[0], {'from': accounts[3]})
 #
 def test_invalid_booker_volume_receivership(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
@@ -310,7 +310,7 @@ def test_invalid_booker_volume_receivership(season_contract, accounts, web3):
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
     # Error assertions
     with brownie.reverts():
-        season_contract.confirmReceivership(token_id, 6, 1, accounts[2], accounts[0], {'from': accounts[1]})
+        season_contract.confirmReceivership(token_id, 6, 1, accounts[0], {'from': accounts[1]})
 #
 def test_confirm_harvest_booking_receivership(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
@@ -321,12 +321,10 @@ def test_confirm_harvest_booking_receivership(season_contract, accounts, web3):
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
 
-    prev_beneficiary_balance = accounts[2].balance()
     prev_farm_dues = accounts[0].balance()
 
-    tx = season_contract.confirmReceivership(token_id, 1, 1, accounts[2], accounts[0], {'from': accounts[1]})
+    tx = season_contract.confirmReceivership(token_id, 1, 1, accounts[0], {'from': accounts[1]})
 
-    current_beneficiary_balance = accounts[2].balance()
     current_farm_dues = accounts[0].balance()
 
     assert len(tx.events) == 1
@@ -335,5 +333,4 @@ def test_confirm_harvest_booking_receivership(season_contract, accounts, web3):
     assert season_contract.totalBookingDeliveredForBooker(accounts[1]) == 1
     assert season_contract.totalBookingDeliveredForFarm(token_id) == 1
     assert season_contract.totalReceivership() == 1
-    assert prev_beneficiary_balance != current_beneficiary_balance
     assert prev_farm_dues != current_farm_dues
