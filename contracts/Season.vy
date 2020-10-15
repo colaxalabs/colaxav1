@@ -396,7 +396,7 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
 # Throw if `self.farmContract.exists(_tokenId) == False`
 # Throw if `_volume != 0`
 @internal
-def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256) -> (uint256, uint256):
+def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256) -> uint256:
   assert _volume != 0 # dev: volume cannot be 0
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert (self.bookerBookings[_booker])[_seasonNo].volume != 0 # dev: no bookings
@@ -406,11 +406,8 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
   # Update booker deposit
   burningDeposit: uint256 = (self.seasonData[_tokenId])[_seasonNo].harvestPrice * _volume
   (self.bookerBookings[_booker])[_seasonNo].deposit -= burningDeposit
-  # Calculate farm overdues after 3% fee
-  farmOverdues: uint256 = burningDeposit - as_wei_value(0.00037, 'ether')
-  # Calculate provider fee
-  providerFee: uint256 = burningDeposit - farmOverdues
-  return farmOverdues, providerFee
+  # Farm overdues
+  return burningDeposit
 
 # @dev Confirm receivership
 # @param _tokenId Tokenized farm id
@@ -423,15 +420,13 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
 # Throw if `registryInterface.exists(_tokenId) == False`
 # Throw if `_seasonNo > seasonInterface.currentSeason(_tokenId)`
 @external
-def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _provider: address, _farmer: address):
+def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _farmer: address):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert (self.bookerBookings[msg.sender])[_seasonNo].volume != 0 # dev: no bookings
   assert _volume <= (self.bookerBookings[msg.sender])[_seasonNo].volume
   farmOverdues: uint256 = 0
-  providerFee: uint256 = 0
-  (farmOverdues, providerFee) = self.burnBooking(_tokenId, msg.sender, _seasonNo, _volume)
+  farmOverdues = self.burnBooking(_tokenId, msg.sender, _seasonNo, _volume)
   # Transfer dues
-  send(_provider, providerFee)
   send(_farmer, farmOverdues)
   # Update delivered booking for booker
   self.bookerDelivery[msg.sender] += 1
