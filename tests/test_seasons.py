@@ -143,6 +143,7 @@ def test_season_harvesting(season_contract, web3):
     assert len(season_data) == 1
     assert season_data[0][11] == 5
     assert season_data[0][13] == 1000000000000000000
+    assert season_contract.resolvedHash(season_data[0][14]) == True
 
 def test_unrestricted_season_harvesting(season_contract):
     season_contract.openSeason(token_id)
@@ -334,3 +335,54 @@ def test_confirm_harvest_booking_receivership(season_contract, accounts, web3):
     assert season_contract.totalBookingDeliveredForFarm(token_id) == 1
     assert season_contract.totalReceivership() == 1
     assert prev_farm_dues != current_farm_dues
+
+def test_tracing_initial_state(season_contract):
+    season_contract.openSeason(token_id)
+
+    # Assertions
+    assert season_contract.allTraces() == 0
+    assert season_contract.farmTraces(token_id) == 0
+    assert season_contract.seasonTraces(token_id, 1) == 0
+
+def test_tracing_invalid_tokenized_farm(season_contract):
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.farmTraces(32)
+
+def test_tracing_invalid_season(season_contract):
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.seasonTraces(token_id, 30)
+
+def test_invalid_tokenized_farm_season_tracing(season_contract):
+
+    season_contract.openSeason(token_id)
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.seasonTraces(32, 1)
+
+def test_invalid_season_hash(season_contract):
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.resolveSeasonHash('0xe91c254ad58860a02c788dfb5c1a65d6a8846ab1dc649631c7db16fef4af2dec')
+
+def test_resolve_unresolved_invalid_hash(season_contract):
+
+    # Assertions
+    assert season_contract.resolvedHash('0xe91c254ad58860a02c788dfb5c1a65d6a8846ab1dc649631c7db16fef4af2dec') == False
+
+def test_tracing_count_for_invalid_hash(season_contract):
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.tracesPerHash('0xe91c254ad58860a02c788dfb5c1a65d6a8846ab1dc649631c7db16fef4af2dec')
+
+def test_traces_count_for_tokenized_farm(season_contract):
+
+    # Assertions
+    assert season_contract.farmTraces(token_id) == 0
+
