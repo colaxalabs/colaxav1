@@ -70,15 +70,6 @@ struct SeasonData:
 # @dev Map season data to farm
 seasonData: HashMap[uint256, HashMap[uint256, SeasonData]]
 
-# @dev Resolved hashes
-resolvedHashes: HashMap[bytes32, bool]
-
-# @dev Season data hashing
-seasonHash: HashMap[bytes32, SeasonData]
-
-# @dev Season data hash traces
-hashTraces: HashMap[bytes32, uint256]
-
 # @dev Farm registry interface variable
 farmContract: Frmregistry
 
@@ -108,11 +99,20 @@ seasonalBookings: HashMap[uint256, uint256] # season => number of season booking
 # @dev All traces
 totalTraces: uint256
 
+# @dev Resolved hashes
+resolvedHashes: HashMap[bytes32, bool]
+
+# @dev Map tokenized farm season to its hash
+seasonHash: HashMap[uint256, HashMap[uint256, bytes32]]
+
+# @dev Season data hashing
+seasonDataHash: HashMap[bytes32, SeasonData]
+
+# @dev Season data hash traces
+hashTraces: HashMap[bytes32, uint256]
+
 # @dev Tokenized farm traces
 harvestTraces: HashMap[uint256, uint256]
-
-# @dev Season traces
-farmSeasonTraces: HashMap[uint256, HashMap[uint256, uint256]]
 
 @external
 def __init__(registry_contract_address: address):
@@ -333,8 +333,10 @@ def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: 
   _hash: bytes32 = keccak256(_trHash)
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].traceHash = _hash
   # Resolve season hash to season data
-  self.seasonHash[_hash] = (self.seasonData[_tokenId])[self.runningSeason[_tokenId]]
+  self.seasonDataHash[_hash] = (self.seasonData[_tokenId])[self.runningSeason[_tokenId]]
   self.resolvedHashes[_hash] = True
+  # Resolve hash to farm season
+  (self.seasonHash[_tokenId])[self.runningSeason[_tokenId]] = _hash
   # Transition state
   self.farmContract.transitionState(_tokenId, 'Booking', msg.sender)
 
@@ -498,19 +500,6 @@ def farmTraces(_tokenId: uint256) -> uint256:
   assert self.farmContract.exists(_tokenId) == True
   return self.harvestTraces[_tokenId]
 
-# @dev Get farm season traces
-# @param _tokenId Tokenized farm id
-# @param _seasonNo Season number
-# @return uint256
-# Throw if `farmContract.exists(_tokenId) == False`
-# Throw if `_seasonNo > self.runningSeason[_tokenId]`
-@external
-@view
-def seasonTraces(_tokenId: uint256, _seasonNo: uint256) -> uint256:
-  assert self.farmContract.exists(_tokenId) == True
-  assert _seasonNo <= self.runningSeason[_tokenId]
-  return (self.farmSeasonTraces[_tokenId])[_seasonNo]
-
 # @dev Season data hash status
 # @param _hash Season data hash
 @external
@@ -528,7 +517,7 @@ def resolveSeasonHash(_hash: bytes32) -> SeasonData:
   assert _hash != EMPTY_BYTES32
   assert self.resolvedHashes[_hash] == True
   self.hashTraces[_hash] += 1
-  return self.seasonHash[_hash]
+  return self.seasonDataHash[_hash]
 
 # @dev Total tracing per hash
 # @param _hash Season data hash
@@ -540,4 +529,17 @@ def tracesPerHash(_hash: bytes32) -> uint256:
   assert _hash != EMPTY_BYTES32
   assert self.resolvedHashes[_hash] == True
   return self.hashTraces[_hash]
+
+# @dev Get farm season data hash
+# @param _tokenId Tokenized farm id
+# @param _seasonNo Season number
+# @return bytes32
+# Throw if `farmContract.exists(_tokenId) == False`
+# Throw if `_seasonNo > self.runningSeason[_tokenId]`
+@external
+@view
+def hashedSeason(_tokenId: uint256, _seasonNo: uint256) -> bytes32:
+  assert self.farmContract.exists(_tokenId) == True
+  assert _seasonNo <= self.runningSeason[_tokenId]
+  return (self.seasonHash[_tokenId])[_seasonNo]
 
