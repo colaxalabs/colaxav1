@@ -342,27 +342,12 @@ def test_tracing_initial_state(season_contract):
     # Assertions
     assert season_contract.allTraces() == 0
     assert season_contract.farmTraces(token_id) == 0
-    assert season_contract.seasonTraces(token_id, 1) == 0
 
 def test_tracing_invalid_tokenized_farm(season_contract):
 
     # Error assertions
     with brownie.reverts():
         season_contract.farmTraces(32)
-
-def test_tracing_invalid_season(season_contract):
-
-    # Error assertions
-    with brownie.reverts():
-        season_contract.seasonTraces(token_id, 30)
-
-def test_invalid_tokenized_farm_season_tracing(season_contract):
-
-    season_contract.openSeason(token_id)
-
-    # Error assertions
-    with brownie.reverts():
-        season_contract.seasonTraces(32, 1)
 
 def test_invalid_season_hash(season_contract):
 
@@ -385,4 +370,61 @@ def test_traces_count_for_tokenized_farm(season_contract):
 
     # Assertions
     assert season_contract.farmTraces(token_id) == 0
+
+def test_resolve_unhashed_season(season_contract):
+    season_contract.openSeason(token_id)
+
+    # Assertions
+    assert season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id)) == '0x0000000000000000000000000000000000000000000000000000000000000000'
+
+def test_hash_season_data(season_contract, accounts, web3):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    _price = web3.toWei(1, 'ether')
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+
+    # Assertions
+    assert season_contract.resolvedHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id))) == True
+
+def test_invalid_season_to_hash(season_contract, accounts, web3):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    _price = web3.toWei(1, 'ether')
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.hashedSeason(token_id, 22)
+
+def test_invalid_token_id_for_season_hash(season_contract, accounts, web3):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    _price = web3.toWei(1, 'ether')
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.hashedSeason(32, 1)
+
+def test_trace_season_hash(season_contract, accounts, web3):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    _price = web3.toWei(1, 'ether')
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+
+    # Trace
+    season_data = season_contract.resolveSeasonHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id)))
+
+    # Assertions
+    assert season_contract.tracesPerHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id))) == 1
+    assert season_data.return_value['crop'] == 'Tomatoe'
+    assert season_data.return_value['expectedYield'] == '1200kg'
 
