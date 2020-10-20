@@ -31,6 +31,15 @@ event Receivership:
 
 # State data
 
+# @dev Total platform transaction
+platformTx: uint256
+
+# @dev Total user transaction
+accountTx: HashMap[address, uint256]
+
+# @dev Total tokenized farm transaction
+farmTx: HashMap[uint256, uint256]
+
 # @dev Completed farm seasons
 totalCompletedSeasons: uint256
 
@@ -117,6 +126,26 @@ harvestTraces: HashMap[uint256, uint256]
 @external
 def __init__(registry_contract_address: address):
   self.farmContract = Frmregistry(registry_contract_address)
+
+# @dev Get total platform transactions
+@external
+@view
+def platformTransactions() -> uint256:
+  return self.platformTx
+
+# @dev Get total user address(account) transactions
+@external
+@view
+def addressTransactions(_address: address) -> uint256:
+  assert _address != ZERO_ADDRESS
+  return self.accountTx[_address]
+
+# @dev Tokenized farm transactions
+@external
+@view
+def farmTransactions(_tokenId: uint256) -> uint256:
+  assert self.farmContract.exists(_tokenId) == True
+  return self.farmTx[_tokenId]
 
 # @dev Get total completed delivery/receivership
 # @return uint256
@@ -435,6 +464,12 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
   # Update booker deposit
   burningDeposit: uint256 = (self.seasonData[_tokenId])[_seasonNo].harvestPrice * _volume
   (self.bookerBookings[_booker])[_seasonNo].deposit -= burningDeposit
+  # Update completed platform transactions
+  self.platformTx += burningDeposit
+  # Update address(account) transactions
+  self.accountTx[_booker] += burningDeposit
+  # Update tokenized farm transactions
+  self.farmTx[_tokenId] += burningDeposit
   # Farm overdues
   return burningDeposit
 
