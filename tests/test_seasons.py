@@ -15,6 +15,7 @@ def test_initial_state(season_contract):
     assert season_contract.currentSeason(token_id) == 0
     assert season_contract.completeSeasons() == 0
     assert season_contract.getSeason(token_id) == 'Dormant'
+    assert season_contract.platformTransactions() == 0
 
 def test_get_tokenized_farm_current_season(season_contract):
 
@@ -335,6 +336,9 @@ def test_confirm_harvest_booking_receivership(season_contract, accounts, web3):
     assert season_contract.totalBookingDeliveredForFarm(token_id) == 1
     assert season_contract.totalReceivership() == 1
     assert prev_farm_dues != current_farm_dues
+    assert season_contract.addressTransactions(accounts[1]) == web3.toWei(1, 'ether')
+    assert season_contract.platformTransactions() == web3.toWei(1, 'ether')
+    assert season_contract.farmTransactions(token_id) == web3.toWei(1, 'ether')
 
 def test_tracing_initial_state(season_contract):
     season_contract.openSeason(token_id)
