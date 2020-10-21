@@ -40,6 +40,9 @@ accountTx: HashMap[address, uint256]
 # @dev Total tokenized farm transaction
 farmTx: HashMap[uint256, uint256]
 
+# @dev Total farm state count
+totalFarmState: HashMap[String[100], uint256]
+
 # @dev Completed farm seasons
 totalCompletedSeasons: uint256
 
@@ -126,6 +129,14 @@ harvestTraces: HashMap[uint256, uint256]
 @external
 def __init__(registry_contract_address: address):
   self.farmContract = Frmregistry(registry_contract_address)
+
+# @dev Get total farm state
+# @param _state State[Dormant, Preparation, Planting, Crop Growth, Harvesting]
+# @return String[100]
+@external
+@view
+def farmStateCount(_state: String[100]) -> uint256:
+  return self.totalFarmState[_state]
 
 # @dev Get total platform transactions
 @external
@@ -296,6 +307,11 @@ def openSeason(_tokenId: uint256):
   assert self.farmContract.getTokenState(_tokenId) == 'Dormant' # dev: is not dormant
   self.runningSeason[_tokenId] += 1
   self.farmContract.transitionState(_tokenId, 'Preparation', msg.sender) # dev: only owner can update state
+  # Update farm state count
+  if self.totalFarmState['Dormant'] != 0:
+    self.totalFarmState['Dormant'] -= 1
+    self.totalFarmState['Preparation'] += 1
+  self.totalFarmState['Preparation'] += 1
 
 # @dev Confirm preparations for new plantings
 # @param _tokenId Tokenized farm ID
@@ -311,6 +327,9 @@ def confirmPreparations(_tokenId: uint256, _crop: String[225], _preparationFerti
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].preparationFertilizerSupplier = _preparationFertilizerSupplier
   # Transition state
   self.farmContract.transitionState(_tokenId, 'Planting', msg.sender)
+  # Update farm state count
+  self.totalFarmState['Preparation'] -= 1
+  self.totalFarmState['Planting'] += 1
 
 # @dev Confirm planting
 # @param _tokenId Tokenized farm ID
@@ -330,6 +349,9 @@ def confirmPlanting(_tokenId: uint256, _seedsUsed: String[225], _seedsSupplier: 
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].plantingFertilizerSupplier = _plantingFertilizerSupplier
   # Transition state
   self.farmContract.transitionState(_tokenId, 'Crop Growth', msg.sender)
+  # Update farm state count
+  self.totalFarmState['Planting'] -= 1
+  self.totalFarmState['Crop Growth'] += 1
 
 # @dev Confirm crop growth
 # @param _tokenId Tokenized farm ID
@@ -343,6 +365,9 @@ def confirmGrowth(_tokenId: uint256, _pesticideUsed: String[225], _pesticideSupp
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].pesticideSupplier = _pesticideSupplier
   # Transition state
   self.farmContract.transitionState(_tokenId, 'Harvesting', msg.sender)
+  # Update farm state count
+  self.totalFarmState['Crop Growth'] -= 1
+  self.totalFarmState['Harvesting'] += 1
 
 # @dev Confirm harvesting
 # @param _tokenId Tokenized farm ID
@@ -368,6 +393,9 @@ def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: 
   (self.seasonHash[_tokenId])[self.runningSeason[_tokenId]] = _hash
   # Transition state
   self.farmContract.transitionState(_tokenId, 'Booking', msg.sender)
+  # Update farm state count
+  self.totalFarmState['Harvesting'] -= 1
+  self.totalFarmState['Booking'] += 1
 
 # @dev Query season data
 # @param _tokenId Tokenized farm
@@ -513,11 +541,14 @@ def getFarmCompleteSeasons(_tokenId: uint256) -> uint256:
 # @param _tokenId Tokenized farm ID
 @external
 def closeSeason(_tokenId: uint256):
-  assert self.farmContract.getTokenState(_tokenId) == 'Harvesting' # dev: is not harvesting
+  assert self.farmContract.getTokenState(_tokenId) == 'Booking' # dev: is not harvesting
   assert (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply == 0 # dev: supply is not exhausted
   self.farmCompleteSeason[_tokenId] += 1
   self.totalCompletedSeasons += 1
   self.farmContract.transitionState(_tokenId, 'Dormant', msg.sender)
+  # Update farm state count
+  self.totalFarmState['Booking'] -= 1
+  self.totalFarmState['Dormant'] += 1
 
 # @dev Get traces
 # @return uint256
