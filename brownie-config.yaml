@@ -53,4 +53,4 @@ hypothesis:
 
 autofetch_sources: false
 dependencies: null
-dev_deployment_artifacts: false
+dev_deployment_artifacts: true
