@@ -50,6 +50,8 @@ def test_farm_season_opening(season_contract):
     # Assertions
     assert season_contract.currentSeason(token_id) == 1
     assert season_contract.getSeason(token_id) == 'Preparation'
+    assert season_contract.farmStateCount('Preparation') == 1
+    assert season_contract.farmStateCount('Dormant') == 0
 
 def test_unrestricted_farm_season_opening(season_contract, accounts):
 
@@ -94,6 +96,9 @@ def test_season_preparation(season_contract):
     assert season_data[0][1] == 'Tomatoe'
     assert season_data[0][2] == 'Organic Fertilizer'
     assert season_data[0][3] == 'Cow Shed Manure'
+    assert season_contract.farmStateCount('Dormant') == 0
+    assert season_contract.farmStateCount('Preparation') == 0
+    assert season_contract.farmStateCount('Planting') == 1
 
 def test_season_planting(season_contract):
     season_contract.openSeason(token_id)
@@ -110,6 +115,10 @@ def test_season_planting(season_contract):
     assert season_data[0][4] == 'F1'
     assert season_data[0][5] == 'Kenya Seed Company'
     assert season_data[0][8] == 'Kenya Seed Supplier'
+    assert season_contract.farmStateCount('Dormant') == 0
+    assert season_contract.farmStateCount('Preparation') == 0
+    assert season_contract.farmStateCount('Planting') == 0
+    assert season_contract.farmStateCount('Crop Growth') == 1
 
 def test_season_crop_growth(season_contract):
     season_contract.openSeason(token_id)
@@ -126,6 +135,11 @@ def test_season_crop_growth(season_contract):
     assert len(season_data) == 1
     assert season_data[0][9] == 'Aphids'
     assert season_data[0][10] == 'Fertilizer Supplier'
+    assert season_contract.farmStateCount('Dormant') == 0
+    assert season_contract.farmStateCount('Preparation') == 0
+    assert season_contract.farmStateCount('Planting') == 0
+    assert season_contract.farmStateCount('Crop Growth') == 0
+    assert season_contract.farmStateCount('Harvesting') == 1
 
 def test_season_harvesting(season_contract, web3):
     season_contract.openSeason(token_id)
@@ -145,6 +159,12 @@ def test_season_harvesting(season_contract, web3):
     assert season_data[0][11] == 5
     assert season_data[0][13] == 1000000000000000000
     assert season_contract.resolvedHash(season_data[0][14]) == True
+    assert season_contract.farmStateCount('Dormant') == 0
+    assert season_contract.farmStateCount('Preparation') == 0
+    assert season_contract.farmStateCount('Planting') == 0
+    assert season_contract.farmStateCount('Crop Growth') == 0
+    assert season_contract.farmStateCount('Harvesting') == 0
+    assert season_contract.farmStateCount('Booking') == 1
 
 def test_unrestricted_season_harvesting(season_contract):
     season_contract.openSeason(token_id)
@@ -275,6 +295,26 @@ def test_get_all_farm_bookings(season_contract, accounts, web3):
         farm_bookings.append(season_contract.getFarmBooking(token_id, i))
 
     assert len(farm_bookings) == 1
+
+def test_season_closure(season_contract, accounts, web3):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    _price = web3.toWei(1, 'ether')
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    _price = web3.toWei(1, 'ether')
+    season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
+    season_contract.closeSeason(token_id)
+
+    # Assertions
+    assert season_contract.completeSeasons() == 1
+    assert season_contract.farmStateCount('Dormant') == 1
+    assert season_contract.farmStateCount('Preparation') == 0
+    assert season_contract.farmStateCount('Planting') == 0
+    assert season_contract.farmStateCount('Crop Growth') == 0
+    assert season_contract.farmStateCount('Harvesting') == 0
+    assert season_contract.farmStateCount('Booking') == 0
 
 # Receivership
 
