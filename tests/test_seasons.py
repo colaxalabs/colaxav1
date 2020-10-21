@@ -432,3 +432,15 @@ def test_trace_season_hash(season_contract, accounts, web3):
     assert season_data.return_value['crop'] == 'Tomatoe'
     assert season_data.return_value['expectedYield'] == '1200kg'
 
+def test_get_total_tx_for_invalid_token(season_contract):
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.farmTransactions(9)
+
+def test_get_total_tx_for_zero_address(season_contract):
+
+    # Error assertions
+    with brownie.reverts():
+        season_contract.addressTransactions('0x0000000000000000000000000000000000000000')
+
