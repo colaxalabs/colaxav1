@@ -276,6 +276,8 @@ def test_get_all_booker_bookings(season_contract, accounts, web3):
     assert booker_bookings[0][3] == accounts[1]
     expected_price = web3.toWei(3, 'ether')
     assert booker_bookings[0][4] == expected_price
+    assert booker_bookings[0][5] == token_id
+    assert booker_bookings[0][6] == 1
 #
 def test_get_all_farm_bookings(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
