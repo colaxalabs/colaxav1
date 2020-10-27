@@ -92,6 +92,8 @@ struct BookingType:
   cancelled: bool
   booker: address
   deposit: uint256
+  tokenId: uint256
+  season: uint256
 
 # @dev Total completed bookings
 totalBookings: uint256
@@ -459,9 +461,10 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   previousVolume: uint256 = (self.bookerBookings[msg.sender])[_runningSeason].volume
   (self.bookerBookings[msg.sender])[_runningSeason].volume += _volume
   (self.bookerBookings[msg.sender])[_runningSeason].delivered = False
-  (self.bookerBookings[msg.sender])[_runningSeason].cancelled = False
   (self.bookerBookings[msg.sender])[_runningSeason].deposit += msg.value
   (self.bookerBookings[msg.sender])[_runningSeason].booker = msg.sender
+  (self.bookerBookings[msg.sender])[_runningSeason].tokenId = _tokenId
+  (self.bookerBookings[msg.sender])[_runningSeason].season = _seasonNo
   self.burnSupply(_tokenId, _runningSeason, _volume)
   # Increment booker total bookings
   if previousVolume == 0:
