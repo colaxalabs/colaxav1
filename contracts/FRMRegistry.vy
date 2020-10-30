@@ -398,6 +398,16 @@ def queryTokenizedFarm(_index: uint256) -> Farm:
   assert _index <= self.tokenizedLands
   return self.indexedTokenizedFarms[_index]
 
+# @dev Get farm attached to the token
+# @param _tokenId Token id
+# Throw if `self.idToOwner[_tokenId] == ZERO_ADDRESS`
+# @returns Farm
+@external
+@view
+def getFarm(_tokenId: uint256) -> Farm:
+  assert self.idToOwner[_tokenId] != ZERO_ADDRESS
+  return self.tokenizedFarms[_tokenId]
+
 # @dev Return total number of tokenized farms
 # @return uint256
 @external
