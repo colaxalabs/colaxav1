@@ -67,7 +67,7 @@ def test_total_tokenized_farms(frmregistry_contract, accounts):
     # Assertions
     assert frmregistry_contract.totalTokenizedFarms() == 1
 
-def test_index_farms_belonging_to_an_account(frmregistry_contract, accounts):
+def test_query_farms_belonging_to_an_account(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
     user_total_farm = frmregistry_contract.balanceOf(accounts[0])
     user_farms = list()
@@ -79,7 +79,7 @@ def test_index_farms_belonging_to_an_account(frmregistry_contract, accounts):
     assert user_farms[0][0] == 'Arunga Vineyard'
     assert user_farms[0][6] == 'Dormant'
 
-def test_index_all_tokenized_farms(frmregistry_contract, accounts):
+def test_query_all_tokenized_farms(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
     total_indexed_farms = frmregistry_contract.totalTokenizedFarms()
     indexed_farms = list()
@@ -118,4 +118,12 @@ def test_update_invalid_tokenized_farm(frmregistry_contract, accounts):
     # Error assertions
     with brownie.reverts():
         frmregistry_contract.transitionState(3, 'Planting', accounts[0])
+def test_query_tokenized_farm_attached_to_a_token_id(frmregistry_contract, accounts):
+    tokenize_farm(frmregistry_contract, accounts)
+
+    farm = frmregistry_contract.getFarm(token_id)
+
+    # Assertions
+    assert farm['name'] == 'Arunga Vineyard'
+    assert farm['soil'] == 'loam soil'
 
