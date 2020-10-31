@@ -118,6 +118,7 @@ def test_update_invalid_tokenized_farm(frmregistry_contract, accounts):
     # Error assertions
     with brownie.reverts():
         frmregistry_contract.transitionState(3, 'Planting', accounts[0])
+
 def test_query_tokenized_farm_attached_to_a_token_id(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
 
@@ -126,4 +127,10 @@ def test_query_tokenized_farm_attached_to_a_token_id(frmregistry_contract, accou
     # Assertions
     assert farm['name'] == 'Arunga Vineyard'
     assert farm['soil'] == 'loam soil'
+
+def test_query_tokenized_farm_attached_to_an_invalid_token_id(frmregistry_contract):
+
+    # Error assertions
+    with brownie.reverts():
+        frmregistry_contract.getFarm(2)
 
