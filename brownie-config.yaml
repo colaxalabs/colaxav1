@@ -7,7 +7,12 @@ project_structure:
     tests: tests
 
 networks:
-    default: development
+    default: rinkeby
+    rinkeby:
+        gas_limit: auto
+        gas_price: auto
+        reverting_tx_gas_limit: false
+        default_contract_owner: false
     development:
         gas_limit: max
         gas_price: 0
