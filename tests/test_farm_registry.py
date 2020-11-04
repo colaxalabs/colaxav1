@@ -76,8 +76,9 @@ def test_query_farms_belonging_to_an_account(frmregistry_contract, accounts):
 
     assert user_total_farm == 1
     assert len(user_farms) == 1
-    assert user_farms[0][0] == 'Arunga Vineyard'
-    assert user_farms[0][6] == 'Dormant'
+    assert user_farms[0][0] == token_id
+    assert user_farms[0][1] == 'Arunga Vineyard'
+    assert user_farms[0][7] == 'Dormant'
 
 def test_query_all_tokenized_farms(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
@@ -88,8 +89,9 @@ def test_query_all_tokenized_farms(frmregistry_contract, accounts):
 
     assert total_indexed_farms == 1
     assert len(indexed_farms) == 1
-    assert indexed_farms[0][0] == 'Arunga Vineyard'
-    assert indexed_farms[0][6] == 'Dormant'
+    assert indexed_farms[0][0] == token_id
+    assert indexed_farms[0][1] == 'Arunga Vineyard'
+    assert indexed_farms[0][7] == 'Dormant'
 
 def test_get_tokenized_farm_state(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
