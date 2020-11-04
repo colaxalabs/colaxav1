@@ -1,9 +1,5 @@
 # @version ^0.2.0
 
-from ..interfaces import FRMRegistryInterface
-
-implements: FRMRegistryInterface
-
 # Interface for the contract called by safeTransferFrom()
 interface ERC721Receiver:
   def onERC721Received(_operator: address, _from: address, _tokenId: uint256, _data: Bytes[1024]) -> bytes32: view
@@ -32,10 +28,11 @@ event Tokenize:
 
 # @dev Farm type
 struct Farm:
+  tokenId: uint256
   name: String[100]
   size: String[20]
-  longitude: decimal
-  latitude: decimal
+  longitude: String[100]
+  latitude: String[100]
   imageHash: String[255]
   soil: String[20]
   season: String[20]
@@ -357,12 +354,13 @@ def burn(_tokenId: uint256):
 # @param _soil Farm land soil type
 # @dev Throw if `_tokenId` is already minted
 @external
-def tokenizeLand(_name: String[100], _size: String[20], _longitude: decimal, _latitude: decimal, _imageHash: String[255], _soil: String[20], _tokenId: uint256):
+def tokenizeLand(_name: String[100], _size: String[20], _longitude: String[100], _latitude: String[100], _imageHash: String[255], _soil: String[20], _tokenId: uint256):
   # Check token id is valid
   # Mint token
   self.mint(msg.sender, _tokenId)
   # Tokenize farm land
   _farm: Farm = Farm({
+    tokenId: _tokenId,
     name: _name,
     size: _size,
     longitude: _longitude,
