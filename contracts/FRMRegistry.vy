@@ -37,6 +37,8 @@ struct Farm:
   soil: String[20]
   season: String[20]
   owner: address
+  userIndex: uint256
+  platformIndex: uint256
 
 # @dev Map token to Farm
 tokenizedFarms: HashMap[uint256, Farm]
@@ -359,6 +361,7 @@ def tokenizeLand(_name: String[100], _size: String[20], _longitude: String[100],
   # Mint token
   self.mint(msg.sender, _tokenId)
   # Tokenize farm land
+  self.tokenizedLands += 1
   _farm: Farm = Farm({
     tokenId: _tokenId,
     name: _name,
@@ -368,10 +371,11 @@ def tokenizeLand(_name: String[100], _size: String[20], _longitude: String[100],
     imageHash: _imageHash,
     soil: _soil,
     season: 'Dormant',
-    owner: msg.sender
+    owner: msg.sender,
+    userIndex: self.ownerNFTCount[msg.sender],
+    platformIndex: self.tokenizedLands
   })
   self.tokenizedFarms[_tokenId] = _farm
-  self.tokenizedLands += 1
   self.indexedTokenizedFarms[self.tokenizedLands] = _farm
   # Indexed
   (self.ownedNFT[msg.sender])[self.ownerNFTCount[msg.sender]] = _farm
@@ -430,7 +434,12 @@ def exists(_tokenId: uint256) -> bool:
 def transitionState(_tokenId: uint256, _state: String[20], _sender: address):
   assert self.idToOwner[_tokenId] != ZERO_ADDRESS # dev: Invalid address
   assert self.idToOwner[_tokenId] == _sender # dev: only owner can update state
+  # Update platform tokenized farm
   self.tokenizedFarms[_tokenId].season = _state
+  # Update user tokenized farm
+  self.indexedTokenizedFarms[self.tokenizedFarms[_tokenId].platformIndex].season = _state
+  # Update user owned NFT
+  (self.ownedNFT[_sender])[self.tokenizedFarms[_tokenId].userIndex].season = _state
 
 # @dev Get token state
 # @param _tokenId Token ID
