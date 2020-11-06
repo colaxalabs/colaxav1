@@ -1,3 +1,3 @@
-# Mkulima v1
+# Colaxa v1
 
-This repository contains mkulima v1 protocols
+This repository contains colaxa v1 protocols
