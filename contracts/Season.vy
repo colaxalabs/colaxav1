@@ -78,6 +78,7 @@ struct SeasonData:
   harvestUnit: String[100]
   harvestPrice: uint256
   traceHash: bytes32
+  pestOrVirus: String[225]
 
 # @dev Map season data to farm
 seasonData: HashMap[uint256, HashMap[uint256, SeasonData]]
@@ -360,9 +361,10 @@ def confirmPlanting(_tokenId: uint256, _seedsUsed: String[225], _seedsSupplier: 
 # @param _pesticideUsed Pesticide used
 # @param _pesticideSupplier Pesticide supplier
 @external
-def confirmGrowth(_tokenId: uint256, _pesticideUsed: String[225], _pesticideSupplier: String[225]):
+def confirmGrowth(_tokenId: uint256, _pestOrVirus: String[225], _pesticideUsed: String[225], _pesticideSupplier: String[225]):
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm crop growth
   assert self.farmContract.getTokenState(_tokenId) == 'Crop Growth' # dev: state is not crop growth
+  (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].pestOrVirus = _pestOrVirus
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].pesticideUsed = _pesticideUsed
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].pesticideSupplier = _pesticideSupplier
   # Transition state
