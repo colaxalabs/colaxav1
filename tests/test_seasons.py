@@ -124,7 +124,7 @@ def test_season_crop_growth(season_contract):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
 
     total_complete_season = season_contract.currentSeason(token_id)
     season_data = list()
@@ -134,7 +134,8 @@ def test_season_crop_growth(season_contract):
     # Assertions
     assert len(season_data) == 1
     assert season_data[0][9] == 'Aphids'
-    assert season_data[0][10] == 'Fertilizer Supplier'
+    assert season_data[0][10] == 'Aphids Supplier'
+    assert season_data[0][15] == 'Army worm'
     assert season_contract.farmStateCount('Dormant') == 0
     assert season_contract.farmStateCount('Preparation') == 0
     assert season_contract.farmStateCount('Planting') == 0
@@ -145,7 +146,7 @@ def test_season_harvesting(season_contract, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id,  'Army worm', 'Aphids', 'Fertilizer Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
 
@@ -170,14 +171,14 @@ def test_unrestricted_season_harvesting(season_contract):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     with brownie.reverts('dev: state is not crop growth'):
-        season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+        season_contract.confirmGrowth(token_id,  'Army worm', 'Aphids', 'Aphids Supplier')
 
 # Booking
 def test_unrestricted_owner_booking_his_her_harvest(season_contract, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     # Error assertions
@@ -188,7 +189,7 @@ def test_invalid_tokenized_farm_booking(season_contract, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     # Error assertions
@@ -199,7 +200,7 @@ def test_booking_unreasonable_amount(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     # Error assertions
@@ -210,7 +211,7 @@ def test_booking_with_zero_value(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     # Error assertions
@@ -221,7 +222,7 @@ def test_booking_with_invalid_season(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     # Error assertions
@@ -232,7 +233,7 @@ def test_booking_with_insufficient_fees(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     # Error assertions
@@ -243,7 +244,7 @@ def test_farm_harvest_booking(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     _price = web3.toWei(1, 'ether')
@@ -257,7 +258,7 @@ def test_get_all_booker_bookings(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     _price = web3.toWei(1, 'ether')
@@ -283,7 +284,7 @@ def test_get_all_farm_bookings(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     _price = web3.toWei(1, 'ether')
@@ -302,7 +303,7 @@ def test_season_closure(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     _price = web3.toWei(1, 'ether')
@@ -324,7 +325,7 @@ def test_invalid_token_id_receivership(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
@@ -336,7 +337,7 @@ def test_zero_booker_volume_receivership(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
@@ -348,7 +349,7 @@ def test_invalid_booker_volume_receivership(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
@@ -360,7 +361,7 @@ def test_confirm_harvest_booking_receivership(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
@@ -427,7 +428,7 @@ def test_hash_season_data(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
 
@@ -438,7 +439,7 @@ def test_invalid_season_to_hash(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
 
@@ -450,7 +451,7 @@ def test_invalid_token_id_for_season_hash(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
 
@@ -462,7 +463,7 @@ def test_trace_season_hash(season_contract, accounts, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
 
