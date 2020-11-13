@@ -397,6 +397,8 @@ def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: 
   (self.seasonHash[_tokenId])[self.runningSeason[_tokenId]] = _hash
   # Transition state
   self.farmContract.transitionState(_tokenId, 'Booking', msg.sender)
+  self.farmCompleteSeason[_tokenId] += 1
+  self.totalCompletedSeasons += 1
   # Update farm state count
   self.totalFarmState['Harvesting'] -= 1
   self.totalFarmState['Booking'] += 1
@@ -548,8 +550,7 @@ def getFarmCompleteSeasons(_tokenId: uint256) -> uint256:
 def closeSeason(_tokenId: uint256):
   assert self.farmContract.getTokenState(_tokenId) == 'Booking' # dev: is not harvesting
   assert (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply == 0 # dev: supply is not exhausted
-  self.farmCompleteSeason[_tokenId] += 1
-  self.totalCompletedSeasons += 1
+  assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can close shop
   self.farmContract.transitionState(_tokenId, 'Dormant', msg.sender)
   # Update farm state count
   self.totalFarmState['Booking'] -= 1
