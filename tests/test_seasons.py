@@ -59,12 +59,6 @@ def test_unrestricted_farm_season_opening(season_contract, accounts):
     with brownie.reverts('dev: only owner can update state'):
         season_contract.openSeason(token_id, {'from': accounts[1]})
 
-def test_unrestricted_season_closure(season_contract):
-
-    # Error assertions
-    with brownie.reverts('dev: is not harvesting'):
-        season_contract.closeSeason(token_id)
-
 def test_get_invalid_farm_season_data(season_contract):
 
     # Error assertions
@@ -156,6 +150,8 @@ def test_season_harvesting(season_contract, web3):
         season_data.append(season_contract.querySeasonData(token_id, i))
 
     # Assertions
+    assert season_contract.completeSeasons() == 1
+    assert season_contract.getFarmCompleteSeasons(token_id) == 1
     assert len(season_data) == 1
     assert season_data[0][11] == 5
     assert season_data[0][13] == 1000000000000000000
@@ -308,16 +304,30 @@ def test_season_closure(season_contract, accounts, web3):
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
     _price = web3.toWei(1, 'ether')
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
-    season_contract.closeSeason(token_id)
+    season_contract.closeSeason(token_id, {'from': accounts[0]})
 
     # Assertions
-    assert season_contract.completeSeasons() == 1
+    assert season_contract.getSeason(token_id) == 'Dormant'
     assert season_contract.farmStateCount('Dormant') == 1
     assert season_contract.farmStateCount('Preparation') == 0
     assert season_contract.farmStateCount('Planting') == 0
     assert season_contract.farmStateCount('Crop Growth') == 0
     assert season_contract.farmStateCount('Harvesting') == 0
     assert season_contract.farmStateCount('Booking') == 0
+
+def test_unrestricted_season_closure(season_contract, accounts, web3):
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
+    _price = web3.toWei(1, 'ether')
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    _price = web3.toWei(1, 'ether')
+    season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
+
+    # Error assertions
+    with brownie.reverts('dev: only owner can close shop'):
+        season_contract.closeSeason(token_id, {'from': accounts[1]})
 
 # Receivership
 
