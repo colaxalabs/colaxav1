@@ -64,6 +64,7 @@ runningSeason: HashMap[uint256, uint256]
 # @dev Farm season data
 struct SeasonData:
   tokenId: uint256
+  openingDate: uint256
   crop: String[225]
   preparationFertilizer: String[225]
   preparationFertilizerSupplier: String[225]
@@ -72,13 +73,15 @@ struct SeasonData:
   expectedYield: String[50]
   plantingFertilizer: String[225]
   plantingFertilizerSupplier: String[225]
+  pestOrVirus: String[225]
   pesticideUsed: String[225]
   pesticideSupplier: String[225]
   harvestSupply: uint256
   harvestUnit: String[100]
   harvestPrice: uint256
+  harvestDate: uint256
+  harvestImage: String[225]
   traceHash: bytes32
-  pestOrVirus: String[225]
 
 # @dev Map season data to farm
 seasonData: HashMap[uint256, HashMap[uint256, SeasonData]]
@@ -95,6 +98,7 @@ struct BookingType:
   deposit: uint256
   tokenId: uint256
   season: uint256
+  date: uint256
 
 # @dev Total completed bookings
 totalBookings: uint256
@@ -309,6 +313,7 @@ def harvestPrice(_tokenId: uint256, _seasonNo: uint256) -> uint256:
 def openSeason(_tokenId: uint256):
   assert self.farmContract.getTokenState(_tokenId) == 'Dormant' # dev: is not dormant
   self.runningSeason[_tokenId] += 1
+  (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].openingDate = block.timestamp
   self.farmContract.transitionState(_tokenId, 'Preparation', msg.sender) # dev: only owner can update state
   # Update farm state count
   if self.totalFarmState['Dormant'] != 0:
@@ -463,6 +468,7 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   # Store booker bookings
   _runningSeason: uint256 = self.runningSeason[_tokenId]
   previousVolume: uint256 = (self.bookerBookings[msg.sender])[_runningSeason].volume
+  (self.bookerBookings[msg.sender])[_runningSeason].date = block.timestamp
   (self.bookerBookings[msg.sender])[_runningSeason].volume += _volume
   (self.bookerBookings[msg.sender])[_runningSeason].delivered = False
   (self.bookerBookings[msg.sender])[_runningSeason].deposit += msg.value

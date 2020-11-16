@@ -1,6 +1,28 @@
 import pytest
 import brownie
 
+seasonDict = {
+    'tokenId': 0,
+    'openingDate': 1,
+    'crop': 2,
+    'preparationFertilizer': 3,
+    'preparationFertilizerSupplier': 4,
+    'seedsUsed': 5,
+    'seedsSupplier': 6,
+    'expectedYield': 7,
+    'plantingFertilizer': 8,
+    'plantingFertilizerSupplier': 9,
+    'pestOrVirus': 10,
+    'pesticideUsed': 11,
+    'pesticideSupplier': 12,
+    'harvestSupply': 13,
+    'harvestUnit': 14,
+    'harvestPrice': 15,
+    'harvestDate': 16,
+    'harvestImage': 17,
+    'traceHash': 18
+}
+
 token_id = 4863475
 
 @pytest.fixture
@@ -87,9 +109,9 @@ def test_season_preparation(season_contract):
 
     # Assertions
     assert len(season_data) == 1
-    assert season_data[0][1] == 'Tomatoe'
-    assert season_data[0][2] == 'Organic Fertilizer'
-    assert season_data[0][3] == 'Cow Shed Manure'
+    assert season_data[0][seasonDict['crop']] == 'Tomatoe'
+    assert season_data[0][seasonDict['preparationFertilizer']] == 'Organic Fertilizer'
+    assert season_data[0][seasonDict['preparationFertilizerSupplier']] == 'Cow Shed Manure'
     assert season_contract.farmStateCount('Dormant') == 0
     assert season_contract.farmStateCount('Preparation') == 0
     assert season_contract.farmStateCount('Planting') == 1
@@ -106,19 +128,19 @@ def test_season_planting(season_contract):
 
     # Assertions
     assert len(season_data) == 1
-    assert season_data[0][4] == 'F1'
-    assert season_data[0][5] == 'Kenya Seed Company'
-    assert season_data[0][8] == 'Kenya Seed Supplier'
+    assert season_data[0][seasonDict['seedsUsed']] == 'F1'
+    assert season_data[0][seasonDict['seedsSupplier']] == 'Kenya Seed Company'
+    assert season_data[0][seasonDict['expectedYield']] == '1200kg'
     assert season_contract.farmStateCount('Dormant') == 0
     assert season_contract.farmStateCount('Preparation') == 0
     assert season_contract.farmStateCount('Planting') == 0
     assert season_contract.farmStateCount('Crop Growth') == 1
-
+#
 def test_season_crop_growth(season_contract):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Infestor x32H', 'Aphids Supplier')
 
     total_complete_season = season_contract.currentSeason(token_id)
     season_data = list()
@@ -127,20 +149,20 @@ def test_season_crop_growth(season_contract):
 
     # Assertions
     assert len(season_data) == 1
-    assert season_data[0][9] == 'Aphids'
-    assert season_data[0][10] == 'Aphids Supplier'
-    assert season_data[0][15] == 'Army worm'
+    assert season_data[0][seasonDict['pestOrVirus']] == 'Army worm'
+    assert season_data[0][seasonDict['pesticideUsed']] == 'Infestor x32H'
+    assert season_data[0][seasonDict['pesticideSupplier']] == 'Aphids Supplier'
     assert season_contract.farmStateCount('Dormant') == 0
     assert season_contract.farmStateCount('Preparation') == 0
     assert season_contract.farmStateCount('Planting') == 0
     assert season_contract.farmStateCount('Crop Growth') == 0
     assert season_contract.farmStateCount('Harvesting') == 1
-
+#
 def test_season_harvesting(season_contract, web3):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id,  'Army worm', 'Aphids', 'Fertilizer Supplier')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'Infestor x32H', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
     season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
 
@@ -153,9 +175,9 @@ def test_season_harvesting(season_contract, web3):
     assert season_contract.completeSeasons() == 1
     assert season_contract.getFarmCompleteSeasons(token_id) == 1
     assert len(season_data) == 1
-    assert season_data[0][11] == 5
-    assert season_data[0][13] == 1000000000000000000
-    assert season_contract.resolvedHash(season_data[0][14]) == True
+    assert season_data[0][seasonDict['harvestSupply']] == 5
+    assert season_data[0][seasonDict['harvestPrice']] == 1000000000000000000
+    assert season_contract.resolvedHash(season_data[0][seasonDict['traceHash']]) == True
     assert season_contract.farmStateCount('Dormant') == 0
     assert season_contract.farmStateCount('Preparation') == 0
     assert season_contract.farmStateCount('Planting') == 0
@@ -167,7 +189,7 @@ def test_unrestricted_season_harvesting(season_contract):
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
     with brownie.reverts('dev: state is not crop growth'):
-        season_contract.confirmGrowth(token_id,  'Army worm', 'Aphids', 'Aphids Supplier')
+        season_contract.confirmGrowth(token_id, 'Army worm', 'Infestor x32H', 'Aphids Supplier')
 
 # Booking
 def test_unrestricted_owner_booking_his_her_harvest(season_contract, web3):

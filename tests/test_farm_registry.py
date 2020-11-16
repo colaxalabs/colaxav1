@@ -32,12 +32,12 @@ def test_validate_invalid_tokenized_farm(frmregistry_contract):
 def test_get_nft_token_name(frmregistry_contract):
 
     # Assertions
-    assert frmregistry_contract.name() == 'Mkulima'
+    assert frmregistry_contract.name() == 'Reap'
 
 def test_get_nft_token_symbol(frmregistry_contract):
 
     # Assertions
-    assert frmregistry_contract.symbol() == 'MKL'
+    assert frmregistry_contract.symbol() == 'REA'
 
 def test_tokenize_farm(frmregistry_contract, accounts):
     tx = tokenize_farm(frmregistry_contract, accounts)
