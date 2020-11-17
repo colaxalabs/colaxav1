@@ -20,7 +20,8 @@ seasonDict = {
     'harvestPrice': 15,
     'harvestDate': 16,
     'harvestImage': 17,
-    'traceHash': 18
+    'traceHash': 18,
+    'bookers': 19
 }
 
 token_id = 4863475
@@ -164,7 +165,7 @@ def test_season_harvesting(season_contract, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Infestor x32H', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
 
     total_complete_season = season_contract.currentSeason(token_id)
     season_data = list()
@@ -198,7 +199,7 @@ def test_unrestricted_owner_booking_his_her_harvest(season_contract, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     # Error assertions
     with brownie.reverts('dev: owner cannot book his/her harvest'):
         season_contract.bookHarvest(token_id, 14, 1)
@@ -209,7 +210,7 @@ def test_invalid_tokenized_farm_booking(season_contract, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     # Error assertions
     with brownie.reverts('dev: invalid token id'):
         season_contract.bookHarvest(3892, 15, 1)
@@ -220,7 +221,7 @@ def test_booking_unreasonable_amount(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     # Error assertions
     with brownie.reverts():
         season_contract.bookHarvest(token_id, 15, 1, {'from': accounts[1]})
@@ -231,7 +232,7 @@ def test_booking_with_zero_value(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     # Error assertions
     with brownie.reverts():
         season_contract.bookHarvest(token_id, 0, 10, {'from': accounts[1]})
@@ -242,7 +243,7 @@ def test_booking_with_invalid_season(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     # Error assertions
     with brownie.reverts():
         season_contract.bookHarvest(token_id, 3, 10, {'from': accounts[1]})
@@ -253,7 +254,7 @@ def test_booking_with_insufficient_fees(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     # Error assertions
     with brownie.reverts('dev: insufficient booking funds'):
         season_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1]})
@@ -264,11 +265,17 @@ def test_farm_harvest_booking(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     _price = web3.toWei(1, 'ether')
     season_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': _price * 3})
 
+    total_complete_season = season_contract.currentSeason(token_id)
+    season_data = list()
+    for i in range(1, total_complete_season+1):
+        season_data.append(season_contract.querySeasonData(token_id, i))
+
     # Assertions
+    assert season_data[0][seasonDict['bookers']] == 1
     assert season_contract.totalFarmBookings(token_id) == 1
     assert season_contract.totalBookerBooking(accounts[1]) == 1
 #
@@ -278,7 +285,7 @@ def test_get_all_booker_bookings(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     _price = web3.toWei(1, 'ether')
     season_contract.bookHarvest(token_id, 2, 1, {'from': accounts[1], 'value': _price * 2})
     season_contract.bookHarvest(token_id, 1, 1, {'from': accounts[1], 'value': _price * 1})
@@ -304,7 +311,7 @@ def test_get_all_farm_bookings(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     _price = web3.toWei(1, 'ether')
     season_contract.bookHarvest(token_id, 2, 1, {'from': accounts[1], 'value': _price * 2})
     season_contract.bookHarvest(token_id, 1, 1, {'from': accounts[1], 'value': _price * 1})
@@ -323,7 +330,7 @@ def test_season_closure(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     _price = web3.toWei(1, 'ether')
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
     season_contract.closeSeason(token_id, {'from': accounts[0]})
@@ -343,7 +350,7 @@ def test_unrestricted_season_closure(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     _price = web3.toWei(1, 'ether')
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
 
@@ -359,7 +366,7 @@ def test_invalid_token_id_receivership(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
     # Error assertions
     with brownie.reverts('dev: invalid token id'):
@@ -371,7 +378,7 @@ def test_zero_booker_volume_receivership(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
     # Error assertions
     with brownie.reverts('dev: no bookings'):
@@ -383,7 +390,7 @@ def test_invalid_booker_volume_receivership(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
     # Error assertions
     with brownie.reverts():
@@ -395,7 +402,7 @@ def test_confirm_harvest_booking_receivership(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     season_contract.bookHarvest(token_id, 5, 1, {'from': accounts[1], 'value': _price * 5})
 
     prev_farm_dues = accounts[0].balance()
@@ -462,7 +469,7 @@ def test_hash_season_data(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
 
     # Assertions
     assert season_contract.resolvedHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id))) == True
@@ -473,7 +480,7 @@ def test_invalid_season_to_hash(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
 
     # Error assertions
     with brownie.reverts():
@@ -485,7 +492,7 @@ def test_invalid_token_id_for_season_hash(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
 
     # Error assertions
     with brownie.reverts():
@@ -497,7 +504,7 @@ def test_trace_season_hash(season_contract, accounts, web3):
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
     season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
     _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price)
+    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
 
     # Trace
     season_data = season_contract.resolveSeasonHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id)))
