@@ -82,6 +82,7 @@ struct SeasonData:
   harvestDate: uint256
   harvestImage: String[225]
   traceHash: bytes32
+  bookers: uint256
 
 # @dev Map season data to farm
 seasonData: HashMap[uint256, HashMap[uint256, SeasonData]]
@@ -313,6 +314,7 @@ def harvestPrice(_tokenId: uint256, _seasonNo: uint256) -> uint256:
 def openSeason(_tokenId: uint256):
   assert self.farmContract.getTokenState(_tokenId) == 'Dormant' # dev: is not dormant
   self.runningSeason[_tokenId] += 1
+  (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].tokenId = _tokenId
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].openingDate = block.timestamp
   self.farmContract.transitionState(_tokenId, 'Preparation', msg.sender) # dev: only owner can update state
   # Update farm state count
@@ -384,12 +386,13 @@ def confirmGrowth(_tokenId: uint256, _pestOrVirus: String[225], _pesticideUsed: 
 # @param _harvestUnit Harvest supply unit
 # @param _unitPrice Harvest price per unit
 @external
-def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: String[100], _unitPrice: uint256):
+def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: String[100], _unitPrice: uint256, _fileHash: String[225]):
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm harvesting
   assert self.farmContract.getTokenState(_tokenId) == 'Harvesting' # dev: state is not harvesting
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply = _harvestSupply
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestUnit = _harvestUnit
   (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestPrice = _unitPrice
+  (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestImage = _fileHash
   # Hash season data after harvest confirmation
   _tr: uint256 = _tokenId + self.runningSeason[_tokenId]
   _trHash: bytes32 = convert(_tr, bytes32)
@@ -478,6 +481,7 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   self.burnSupply(_tokenId, _runningSeason, _volume)
   # Increment booker total bookings
   if previousVolume == 0:
+    (self.seasonData[_tokenId])[_seasonNo].bookers += 1
     self.totalBookerBookings[msg.sender] += 1
   # Index seasons booked
   (self.seasonsBooked[msg.sender])[self.totalBookerBookings[msg.sender]] = _runningSeason
