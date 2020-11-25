@@ -89,8 +89,8 @@ ERC721_INTERFACE_ID: constant(bytes32) = 0x0000000000000000000000000000000000000
 
 @external
 def __init__():
-  self.tokenName = 'Reap'
-  self.tokenSymbol = 'REA'
+  self.tokenName = 'Mkulima'
+  self.tokenSymbol = 'MKL'
   # The interface ID of supportedInterfaces
   self.supportedInterfaces[ERC165_INTERFACE_ID] = True
   self.supportedInterfaces[ERC721_INTERFACE_ID] = True

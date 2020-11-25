@@ -31,15 +31,6 @@ event Receivership:
 
 # State data
 
-# @dev Total platform transaction
-platformTx: uint256
-
-# @dev Total user transaction
-accountTx: HashMap[address, uint256]
-
-# @dev Total tokenized farm transaction
-farmTx: HashMap[uint256, uint256]
-
 # @dev Total farm state count
 totalFarmState: HashMap[String[100], uint256]
 
@@ -145,26 +136,6 @@ def __init__(registry_contract_address: address):
 @view
 def farmStateCount(_state: String[100]) -> uint256:
   return self.totalFarmState[_state]
-
-# @dev Get total platform transactions
-@external
-@view
-def platformTransactions() -> uint256:
-  return self.platformTx
-
-# @dev Get total user address(account) transactions
-@external
-@view
-def addressTransactions(_address: address) -> uint256:
-  assert _address != ZERO_ADDRESS
-  return self.accountTx[_address]
-
-# @dev Tokenized farm transactions
-@external
-@view
-def farmTransactions(_tokenId: uint256) -> uint256:
-  assert self.farmContract.exists(_tokenId) == True
-  return self.farmTx[_tokenId]
 
 # @dev Get total completed delivery/receivership
 # @return uint256
