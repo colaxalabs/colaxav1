@@ -20,10 +20,13 @@ farmTx: HashMap[uint256, uint256]
 # @dev Registry contract
 farmContract: Frmregistry
 
+# @dev Total number of markets
+markets: uint256
+
 # @dev Defaults
 @external
-def __init__(registr_contract_address: address):
-  self.farmContract = Frmregistry(registr_contract_address)
+def __init__(registry_contract_address: address):
+  self.farmContract = Frmregistry(registry_contract_address)
 
 # @dev Get total deal sealed on the platform
 @external

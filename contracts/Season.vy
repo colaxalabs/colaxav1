@@ -481,11 +481,11 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
   burningDeposit: uint256 = (self.seasonData[_tokenId])[_seasonNo].harvestPrice * _volume
   (self.bookerBookings[_booker])[_seasonNo].deposit -= burningDeposit
   # Update completed platform transactions
-  self.platformTx += burningDeposit
+  # self.platformTx += burningDeposit
   # Update address(account) transactions
-  self.accountTx[_booker] += burningDeposit
+  # self.accountTx[_booker] += burningDeposit
   # Update tokenized farm transactions
-  self.farmTx[_tokenId] += burningDeposit
+  # self.farmTx[_tokenId] += burningDeposit
   # Farm overdues
   return burningDeposit
 
