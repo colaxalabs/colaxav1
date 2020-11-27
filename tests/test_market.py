@@ -23,3 +23,47 @@ def test_initial_state(market_contract):
     assert market_contract.farmTransactions(token_id) == 0
     assert market_contract.totalMarkets() == 0
 
+def test_create_market(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+    # Query market
+    market = market_contract.getEnlistedMarket(1)
+
+    # Assertions
+    assert market_contract.totalMarkets() == 1
+    assert market['price'] == _price
+    assert market['active'] == True
+
+def test_query_current_farm_market(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Query current farm market
+    market = market_contract.getCurrentFarmMarket(token_id)
+
+    # Assertions
+    assert market['active'] == True
+    assert market['open'] == True
+
+def test_invalid_market_creation(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Error assertion
+    with brownie.reverts('dev: exhaust previous market supply'):
+        market_contract.createMarket(token_id, _price, 4, "KG")
+
+def test_query_enlisted_markets(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Query markets
+    markets = list()
+    totalMarkets = market_contract.totalMarkets()
+    for i in range(1, totalMarkets+1):
+        market = market_contract.getEnlistedMarket(i)
+        markets.append(market)
+
+    # Assertions
+    assert markets[0]['price'] == _price
+
