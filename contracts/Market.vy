@@ -14,7 +14,8 @@ struct Market:
   supplyUnit: String[2]
   active: bool
   open: bool
-  date: uint256
+  openDate: uint256
+  closeDate: uint256
   originalSupply: uint256
   remainingSupply: uint256
   bookers: uint256
@@ -42,6 +43,9 @@ enlistedMarkets: HashMap[uint256, Market]
 
 # @dev Farm market: tokenId => Market
 farmMarket: HashMap[uint256, Market]
+
+# @dev Farm market ID: tokenId => marketId
+marketId: HashMap[uint256, uint256]
 
 # @dev Total farm previous markets: tokenId => totalPrevMarkets
 totalPrevMarkets: HashMap[uint256, uint256]
@@ -129,7 +133,28 @@ def getCurrentFarmMarket(_tokenId: uint256) -> Market:
 # @param _unit Supply unit(kilogram)
 @external
 def createMarket(_tokenId: uint256, _price: uint256, _supply: uint256, _unit: String[2]):
-  pass
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm
+  assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can create market
+  assert self.seasonContract.getSeason(_tokenId) == 'Harvesting'
+  assert self.farmMarket[_tokenId].remainingSupply == 0 # dev: exhaust previous market supply
+  # Market count
+  self.markets += 1
+  # Farm market ID
+  self.marketId[_tokenId] = self.markets
+  # Store market
+  self.farmMarket[_tokenId] = Market({
+    price: _price,
+    supplyUnit: _unit,
+    originalSupply: _supply,
+    remainingSupply: _supply,
+    active: True,
+    open: True,
+    openDate: block.timestamp,
+    closeDate: 0,
+    bookers: 0
+  })
+  # Update enlisted markets
+  self.enlistedMarkets[self.markets] = self.farmMarket[_tokenId]
 
 # @dev Get enlisted market
 # @param _index Index of the market
@@ -138,5 +163,6 @@ def createMarket(_tokenId: uint256, _price: uint256, _supply: uint256, _unit: St
 @external
 @view
 def getEnlistedMarket(_index: uint256) -> Market:
-  pass
+  assert _index <= self.markets # dev: index out of range
+  return self.enlistedMarkets[_index]
 

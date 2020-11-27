@@ -375,7 +375,7 @@ def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: 
   # Resolve hash to farm season
   (self.seasonHash[_tokenId])[self.runningSeason[_tokenId]] = _hash
   # Transition state
-  self.farmContract.transitionState(_tokenId, 'Booking', msg.sender)
+  # self.farmContract.transitionState(_tokenId, 'Booking', msg.sender)
   self.farmCompleteSeason[_tokenId] += 1
   self.totalCompletedSeasons += 1
   # Update farm state count
@@ -400,7 +400,7 @@ def querySeasonData(_tokenId: uint256, _index: uint256) -> SeasonData:
 # Throw if `_volume > (self.seasonData[_tokenId])[_seasonNo]`
 @internal
 def burnSupply(_tokenId: uint256, _seasonNo: uint256, _volume: uint256):
-  assert self.farmContract.getTokenState(_tokenId) == 'Booking' # dev: not harvesting to burn supply
+  assert self.farmContract.getTokenState(_tokenId) == 'Harvesting' # dev: not harvesting to burn supply
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert _volume <= (self.seasonData[_tokenId])[_seasonNo].harvestSupply # dev: volume greater than available supply
   assert _seasonNo <= self.runningSeason[_tokenId] # dev: season number out of range
@@ -434,7 +434,6 @@ def mintSupply(_tokenId: uint256, _seasonNo: uint256, _volume: uint256):
 @payable
 def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
-  assert self.farmContract.getTokenState(_tokenId) == 'Booking' # dev: season not booking
   assert msg.sender != self.farmContract.ownerOf(_tokenId) # dev: owner cannot book his/her harvest
   assert _volume != 0 # dev: volume cannot be 0
   assert _volume <= (self.seasonData[_tokenId])[_seasonNo].harvestSupply
@@ -529,7 +528,7 @@ def getFarmCompleteSeasons(_tokenId: uint256) -> uint256:
 # @param _tokenId Tokenized farm ID
 @external
 def closeSeason(_tokenId: uint256):
-  assert self.farmContract.getTokenState(_tokenId) == 'Booking' # dev: is not harvesting
+  assert self.farmContract.getTokenState(_tokenId) == 'Harvesting' # dev: is not harvesting
   assert (self.seasonData[_tokenId])[self.runningSeason[_tokenId]].harvestSupply == 0 # dev: supply is not exhausted
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can close shop
   self.farmContract.transitionState(_tokenId, 'Dormant', msg.sender)
