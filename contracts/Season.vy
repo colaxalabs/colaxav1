@@ -593,5 +593,6 @@ def tracesPerHash(_hash: bytes32) -> uint256:
 def hashedSeason(_tokenId: uint256, _seasonNo: uint256) -> bytes32:
   assert self.farmContract.exists(_tokenId) == True
   assert _seasonNo <= self.runningSeason[_tokenId]
+  assert (self.seasonHash[_tokenId])[_seasonNo] != EMPTY_BYTES32 # dev: invalid season
   return (self.seasonHash[_tokenId])[_seasonNo]
 

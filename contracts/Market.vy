@@ -7,18 +7,29 @@ interface Frmregistry:
 
 interface Season:
   def getSeason(_tokenId: uint256) -> String[20]: view
+  def currentSeason(_tokenId: uint256) -> uint256: view
+  def hashedSeason(_tokenId: uint256, _seasonNo: uint256) -> bytes32: view
 
 # @dev Market
 struct Market:
   price: uint256
   supplyUnit: String[2]
-  active: bool
-  open: bool
   openDate: uint256
   closeDate: uint256
   originalSupply: uint256
   remainingSupply: uint256
   bookers: uint256
+
+# @dev Book
+struct Book:
+  volume: uint256
+  delivered: bool
+  booker: address
+  deposit: uint256
+  season: uint256
+  date: uint256
+  marketId: uint256
+  harvestId: bytes32
 
 # @dev Sealed platform tx
 platformTx: uint256
@@ -44,6 +55,9 @@ enlistedMarkets: HashMap[uint256, Market]
 # @dev Farm market: tokenId => Market
 farmMarket: HashMap[uint256, Market]
 
+# @dev Is market for farm created
+isMarket: HashMap[uint256, bool]
+
 # @dev Farm market ID: tokenId => marketId
 marketId: HashMap[uint256, uint256]
 
@@ -52,6 +66,17 @@ totalPrevMarkets: HashMap[uint256, uint256]
 
 # @dev Farm previous markets: tokenId => index => Market
 previousMarkets: HashMap[uint256, HashMap[uint256, Market]]
+
+# @dev Index all bookings to address
+totalBookerBookings: HashMap[address, uint256] # address => total number of booker bookings
+bookerBooking: HashMap[address, HashMap[uint256, Book]] # address => seasonNo[_tokenId]: index => Booking{}
+seasonsBooked: HashMap[address, HashMap[uint256, uint256]] # seasons booked indexed by totalBookerBookings
+bookedSeason: HashMap[uint256, bool] # Season booked mapped to True of False
+
+# @dev Market booking: market => index => Book
+marketBooking: HashMap[uint256, HashMap[uint256, Book]]
+# @dev Index market bookings
+marketBookingIndex: HashMap[uint256, HashMap[uint256, uint256]]
 
 # @dev Defaults
 @external
@@ -126,6 +151,18 @@ def getCurrentFarmMarket(_tokenId: uint256) -> Market:
   assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm
   return self.farmMarket[_tokenId]
 
+# @dev Get market booking
+# @param _tokenId Tokenized farm market ID
+# @param _index Index of the market in mapping
+# Throw if `farmContract.exists(_tokenId) == False`
+# Throw if `_index > self.farmMarket[_tokenId].bookers`
+@external
+@view
+def getMarketBooking(_tokenId: uint256, _index: uint256) -> Book:
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm id
+  assert _index <= self.farmMarket[_tokenId].bookers # dev: index out of range
+  return (self.marketBooking[_tokenId])[_index]
+
 # @dev Farm goes to market
 # @param _tokenId Tokenized farm ID
 # @param _price Price of commodity per supply unit
@@ -138,23 +175,23 @@ def createMarket(_tokenId: uint256, _price: uint256, _supply: uint256, _unit: St
   assert self.seasonContract.getSeason(_tokenId) == 'Harvesting'
   assert self.farmMarket[_tokenId].remainingSupply == 0 # dev: exhaust previous market supply
   # Market count
-  self.markets += 1
+  if self.isMarket[_tokenId] == False:
+    self.markets += 1
+    self.marketId[_tokenId] = self.markets
+    self.isMarket[_tokenId] = True
   # Farm market ID
-  self.marketId[_tokenId] = self.markets
   # Store market
   self.farmMarket[_tokenId] = Market({
     price: _price,
     supplyUnit: _unit,
     originalSupply: _supply,
     remainingSupply: _supply,
-    active: True,
-    open: True,
     openDate: block.timestamp,
     closeDate: 0,
     bookers: 0
   })
   # Update enlisted markets
-  self.enlistedMarkets[self.markets] = self.farmMarket[_tokenId]
+  self.enlistedMarkets[self.marketId[_tokenId]] = self.farmMarket[_tokenId]
 
 # @dev Get enlisted market
 # @param _index Index of the market
@@ -165,4 +202,98 @@ def createMarket(_tokenId: uint256, _price: uint256, _supply: uint256, _unit: St
 def getEnlistedMarket(_index: uint256) -> Market:
   assert _index <= self.markets # dev: index out of range
   return self.enlistedMarkets[_index]
+
+# @dev Burn season supply
+# @param _tokenId Tokenized farm ID
+# @param _volume Volume to burn
+@internal
+def burnSupply(_tokenId: uint256, _volume: uint256):
+  self.farmMarket[_tokenId].remainingSupply -= _volume
+
+# @dev Mint season supply
+# @param _tokenId Tokenized farm ID
+# @param _volume Volume to burn
+# @internal
+# def mintSupply(_tokenId: uint256, _volume: uint256):
+  # self.farmMarket[_tokenId].remainingSupply += _volume
+
+# @dev Get total booker bookings
+# @param _address Booker address
+@external
+@view
+def totalBookerBooking(_address: address) -> uint256:
+  assert _address != ZERO_ADDRESS # dev: invalid address
+  return self.totalBookerBookings[_address]
+
+# @dev Get seasons booked
+# @param _index Index
+# Throw if `_index > self.totalBookerBookings[msg.sender]`
+# @return uint256
+@external
+@view
+def getSeasonBooked(_index: uint256, _sender: address) -> uint256:
+  assert _index <= self.totalBookerBookings[_sender] # dev: out of range
+  return (self.seasonsBooked[_sender])[_index]
+
+# @dev Get booker booking
+# @param _index Index
+# @param _booker Booker address
+@external
+@view
+def getBookerBooking(_seasonIndex: uint256, _booker: address) -> Book:
+  assert _booker != ZERO_ADDRESS
+  return (self.bookerBooking[_booker])[_seasonIndex]
+
+# @dev Get total market bookings
+# @param _tokenId Tokenized farm market ID
+# @return uint256
+# Throw if `farmContract.exists(_tokenId) == False`
+@external
+@view
+def totalMarketBookers(_tokenId: uint256) -> uint256:
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm id
+  return self.farmMarket[_tokenId].bookers
+
+# @dev Book season harvest: burn season supply
+# @dev Index booking to farm
+# @dev Index booking to booker
+# @dev Update season supply after booking
+# Throw if `_volume == 0 or _volume > harvestSupply`
+# Throw if `msg.value != unitPrice * _volume` : insufficient funds
+# Throw if `msg.sender == ownerOf(_tokenId)`: owner cannot book his/her harvest
+# Throw if `getSeason(_tokenId) != Harvesting`
+# @param _tokenId Tokenized farm id
+# @param _volume Amount to book
+# @param _seasonNo Season number
+@external
+@payable
+def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
+  assert msg.sender != self.farmContract.ownerOf(_tokenId) # dev: owner cannot book his/her harvest
+  assert _volume != 0 # dev: volume cannot be 0
+  assert _volume <= self.farmMarket[_tokenId].remainingSupply
+  assert msg.value != as_wei_value(0, 'ether') # dev: booking funds cannot be 0
+  assert msg.value == self.farmMarket[_tokenId].price * _volume # dev: insufficient booking funds
+  # Store booker bookings
+  _runningSeason: uint256 = self.seasonContract.currentSeason(_tokenId)
+  _harvestId: bytes32 = self.seasonContract.hashedSeason(_tokenId, _runningSeason)
+  (self.bookerBooking[msg.sender])[_runningSeason].date = block.timestamp
+  (self.bookerBooking[msg.sender])[_runningSeason].volume += _volume
+  (self.bookerBooking[msg.sender])[_runningSeason].delivered = False
+  (self.bookerBooking[msg.sender])[_runningSeason].deposit += msg.value
+  (self.bookerBooking[msg.sender])[_runningSeason].booker = msg.sender
+  (self.bookerBooking[msg.sender])[_runningSeason].marketId = _tokenId
+  (self.bookerBooking[msg.sender])[_runningSeason].season = _seasonNo
+  (self.bookerBooking[msg.sender])[_runningSeason].harvestId = _harvestId
+  self.burnSupply(_tokenId, _volume)
+  # Increment booker total bookings
+  if self.bookedSeason[_runningSeason] == False:
+    self.farmMarket[_tokenId].bookers += 1
+    self.totalBookerBookings[msg.sender] += 1
+    self.bookedSeason[_runningSeason] = True
+  # Index seasons booked
+  (self.seasonsBooked[msg.sender])[self.totalBookerBookings[msg.sender]] = _runningSeason
+  # Index market booking
+  (self.marketBookingIndex[_tokenId])[_runningSeason] = self.farmMarket[_tokenId].bookers
+  (self.marketBooking[_tokenId])[self.farmMarket[_tokenId].bookers] = (self.bookerBooking[msg.sender])[_runningSeason]
 
