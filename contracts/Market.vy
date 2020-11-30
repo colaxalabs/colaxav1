@@ -297,3 +297,31 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   (self.marketBookingIndex[_tokenId])[_runningSeason] = self.farmMarket[_tokenId].bookers
   (self.marketBooking[_tokenId])[self.farmMarket[_tokenId].bookers] = (self.bookerBooking[msg.sender])[_runningSeason]
 
+# @dev Confirm receivership
+# @param _tokenId Tokenized farm id
+# @param _volume Booking volume to confirm
+# @param _seasonNo Season number
+# @param _provider Service provider
+# @param _farmer Farm beneficiary
+# Throw if `_volume > (bookerBooking[msg.sender])[_seasonNo].volume`
+# Throw if `_volume == 0`
+# Throw if `registryInterface.exists(_tokenId) == False`
+# Throw if `_seasonNo > seasonInterface.currentSeason(_tokenId)`
+#@external
+#def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _farmer: address):
+ # assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
+  #assert (self.bookerBookings[msg.sender])[_seasonNo].volume != 0 # dev: no bookings
+  #assert _volume <= (self.bookerBookings[msg.sender])[_seasonNo].volume
+  #farmOverdues: uint256 = 0
+  #farmOverdues = self.burnBooking(_tokenId, msg.sender, _seasonNo, _volume)
+  # Transfer dues
+  #send(_farmer, farmOverdues)
+  # Update delivered booking for booker
+  #self.bookerDelivery[msg.sender] += 1
+  # Update delivered booking for farm
+  #self.tokenizedFarmDelivery[_tokenId] += 1
+  # Update total receivership
+  #self.completedDelivery += 1
+  # Log event
+  #log Receivership((self.bookerBookings[msg.sender])[_seasonNo].volume, (self.bookerBookings[msg.sender])[_seasonNo].deposit)
+
