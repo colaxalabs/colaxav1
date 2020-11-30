@@ -32,7 +32,7 @@ def test_create_market(market_contract, accounts, web3):
     # Assertions
     assert market_contract.totalMarkets() == 1
     assert market['price'] == _price
-    assert market['active'] == True
+    assert market['remainingSupply'] == 3
 
 def test_query_current_farm_market(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
@@ -42,16 +42,22 @@ def test_query_current_farm_market(market_contract, accounts, web3):
     market = market_contract.getCurrentFarmMarket(token_id)
 
     # Assertions
-    assert market['active'] == True
-    assert market['open'] == True
+    assert market['remainingSupply'] == 3
 
-def test_invalid_market_creation(market_contract, accounts, web3):
+def test_invalid_market_create_with_existing_supply(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
     market_contract.createMarket(token_id, _price, 3, "KG")
 
     # Error assertion
     with brownie.reverts('dev: exhaust previous market supply'):
         market_contract.createMarket(token_id, _price, 4, "KG")
+
+def test_invalid_market_create_with_invalid_tokenized_farm(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+
+    # Error assertion
+    with brownie.reverts('dev: invalid tokenized farm'):
+        market_contract.createMarket(3, _price, 3, "KG")
 
 def test_query_enlisted_markets(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
@@ -66,4 +72,77 @@ def test_query_enlisted_markets(market_contract, accounts, web3):
 
     # Assertions
     assert markets[0]['price'] == _price
+
+def test_invalid_booking_with_invalid_tokenized_farm(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    with brownie.reverts('dev: invalid token id'):
+        market_contract.bookHarvest(3, 2, 1, {'from': accounts[1], 'value': _price * 2})
+
+def test_invalid_booking_with_not_farm_owner(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    with brownie.reverts('dev: owner cannot book his/her harvest'):
+        market_contract.bookHarvest(token_id, 2, 1, {'from': accounts[0], 'value': _price * 2})
+
+def test_invalid_booking_with_insufficient_funds(market_contract, accounts, web3):
+    _price = web3.toWei(0, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    with brownie.reverts('dev: booking funds cannot be 0'):
+        market_contract.bookHarvest(token_id, 2, 1, {'from': accounts[1], 'value': _price * 2})
+
+def test_invalid_booking_with_excess_booking_funds(market_contract, accounts, web3):
+    _price = web3.toWei(2, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    with brownie.reverts('dev: insufficient booking funds'):
+        market_contract.bookHarvest(token_id, 2, 1, {'from': accounts[1], 'value': _price * 1})
+
+def test_invalid_booking_with_insufficient_booking_fee(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    with brownie.reverts('dev: insufficient booking funds'):
+        market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': _price * 2})
+
+def test_book_harvest(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    _bookingFee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 1, 1, {'from': accounts[1], 'value': _bookingFee * 1})
+    market_contract.bookHarvest(token_id, 1, 1, {'from': accounts[1], 'value': _bookingFee * 1})
+    market = market_contract.getCurrentFarmMarket(token_id)
+
+    # Get booker bookings
+    bookings = market_contract.totalBookerBooking(accounts[1])
+    booking_list = list()
+    for i in range(1, bookings + 1):
+        season_booked = market_contract.getSeasonBooked(i, accounts[1])
+        booking_list.append(market_contract.getBookerBooking(season_booked, accounts[1]))
+
+    # Get market bookings
+    market_booking_list = list()
+    market_bookings = market_contract.totalMarketBookers(token_id)
+    for i in range(1, market_bookings+1):
+        market_booking_list.append(market_contract.getMarketBooking(token_id, i))
+
+    # Assertions
+    assert market['bookers'] == 1
+    assert market['remainingSupply'] == 1
+    assert booking_list[0]['deposit'] == web3.toWei(2, 'ether')
+    assert booking_list[0]['volume'] == 2
+    assert market_booking_list[0]['booker'] == accounts[1]
+    assert market_booking_list[0]['volume'] == 2
+    assert market_booking_list[0]['deposit'] == web3.toWei(2, 'ether')
+
 
