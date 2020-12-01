@@ -71,7 +71,7 @@ previousMarkets: HashMap[uint256, HashMap[uint256, Market]]
 totalBookerBookings: HashMap[address, uint256] # address => total number of booker bookings
 bookerBooking: HashMap[address, HashMap[uint256, Book]] # address => seasonNo[_tokenId]: index => Booking{}
 seasonsBooked: HashMap[address, HashMap[uint256, uint256]] # seasons booked indexed by totalBookerBookings
-bookedSeason: HashMap[uint256, bool] # Season booked mapped to True of False
+bookedSeason: HashMap[address, HashMap[uint256, bool]] # Season booked mapped to True of False
 
 # @dev Market booking: market => index => Book
 marketBooking: HashMap[uint256, HashMap[uint256, Book]]
@@ -203,13 +203,6 @@ def getEnlistedMarket(_index: uint256) -> Market:
   assert _index <= self.markets # dev: index out of range
   return self.enlistedMarkets[_index]
 
-# @dev Burn season supply
-# @param _tokenId Tokenized farm ID
-# @param _volume Volume to burn
-@internal
-def burnSupply(_tokenId: uint256, _volume: uint256):
-  self.farmMarket[_tokenId].remainingSupply -= _volume
-
 # @dev Mint season supply
 # @param _tokenId Tokenized farm ID
 # @param _volume Volume to burn
@@ -254,6 +247,16 @@ def totalMarketBookers(_tokenId: uint256) -> uint256:
   assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm id
   return self.farmMarket[_tokenId].bookers
 
+# @dev Burn season supply
+# @param _tokenId Tokenized farm ID
+# @param _volume Volume to burn
+@internal
+def burnSupply(_tokenId: uint256, _volume: uint256):
+  self.farmMarket[_tokenId].remainingSupply -= _volume
+  if self.farmMarket[_tokenId].remainingSupply == 0:
+    self.totalPrevMarkets[_tokenId] += 1
+    (self.previousMarkets[_tokenId])[self.totalPrevMarkets[_tokenId]] = self.farmMarket[_tokenId]
+
 # @dev Book season harvest: burn season supply
 # @dev Index booking to farm
 # @dev Index booking to booker
@@ -285,12 +288,13 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   (self.bookerBooking[msg.sender])[_runningSeason].marketId = _tokenId
   (self.bookerBooking[msg.sender])[_runningSeason].season = _seasonNo
   (self.bookerBooking[msg.sender])[_runningSeason].harvestId = _harvestId
-  self.burnSupply(_tokenId, _volume)
   # Increment booker total bookings
-  if self.bookedSeason[_runningSeason] == False:
+  if (self.bookedSeason[msg.sender])[_runningSeason] == False:
     self.farmMarket[_tokenId].bookers += 1
     self.totalBookerBookings[msg.sender] += 1
-    self.bookedSeason[_runningSeason] = True
+    (self.bookedSeason[msg.sender])[_runningSeason] = True
+  # Burn supply
+  self.burnSupply(_tokenId, _volume)
   # Index seasons booked
   (self.seasonsBooked[msg.sender])[self.totalBookerBookings[msg.sender]] = _runningSeason
   # Index market booking
