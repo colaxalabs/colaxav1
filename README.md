@@ -1,3 +1,3 @@
-# Colaxa v1
+# reap v1
 
-This repository contains colaxa v1 protocols
+This repository contains reap v1 protocols
