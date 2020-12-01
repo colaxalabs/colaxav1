@@ -145,4 +145,22 @@ def test_book_harvest(market_contract, accounts, web3):
     assert market_booking_list[0]['volume'] == 2
     assert market_booking_list[0]['deposit'] == web3.toWei(2, 'ether')
 
+def test_query_previous_markets_for_farm(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Get previous markets
+    previous_markets = list()
+    total_previous_markets = market_contract.farmPrevMarkets(token_id)
+    for i in range(1, total_previous_markets+1):
+        previous_markets.append(market_contract.getFarmPrevMarket(token_id, i))
+
+    # Assertions
+    assert previous_markets[0]['originalSupply'] == 3
+    assert previous_markets[0]['remainingSupply'] == 0
+    assert previous_markets[0]['bookers'] == 1
 
