@@ -137,6 +137,8 @@ def test_book_harvest(market_contract, accounts, web3):
         market_booking_list.append(market_contract.getMarketBooking(token_id, i))
 
     # Assertions
+    assert bookings == 1
+    assert market_bookings == 1
     assert market['bookers'] == 1
     assert market['remainingSupply'] == 1
     assert booking_list[0]['deposit'] == web3.toWei(2, 'ether')
@@ -163,4 +165,87 @@ def test_query_previous_markets_for_farm(market_contract, accounts, web3):
     assert previous_markets[0]['originalSupply'] == 3
     assert previous_markets[0]['remainingSupply'] == 0
     assert previous_markets[0]['bookers'] == 1
+
+def test_receive_confirmation_with_invalid_tokenized_farm(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Error assertion
+    with brownie.reverts('dev: invalid token id'):
+        market_contract.confirmReceivership(77777777, 3, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.003, 'ether')})
+
+def test_receive_confirmation_with_invalid_booker(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Error assertion
+    with brownie.reverts('dev: no bookings'):
+        market_contract.confirmReceivership(token_id, 1, 1, accounts[0], accounts[2])
+
+def test_receive_confirmation_with_invalid_booking_volume(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Error assertion
+    with brownie.reverts('dev: volume out of range'):
+        market_contract.confirmReceivership(token_id, 4, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.003, 'ether')})
+
+def test_receive_confirmation_with_zero_booking_volume(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Error assertion
+    with brownie.reverts('dev: volume cannot be 0'):
+        market_contract.confirmReceivership(token_id, 0, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.003, 'ether')})
+
+def test_receive_confirmation_with_insufficient_booking_fee(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Error assertion
+    with brownie.reverts('dev: insufficient confirmation fee'):
+        market_contract.confirmReceivership(token_id, 2, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.002, 'ether')})
+
+def test_receive_confirmation(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, _price, 3, "KG")
+    prev_balance = accounts[2].balance()
+    prev_owner_balance = accounts[0].balance()
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Confirm receivership
+    market_contract.confirmReceivership(token_id, 1, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.0037, 'ether')})
+
+    # Assertions
+    new_balance = prev_balance + web3.toWei(0.0037, 'ether')
+    new_owner_balance = prev_owner_balance + (web3.toWei(1, 'ether') - web3.toWei(0.0037, 'ether'))
+    assert new_owner_balance == accounts[0].balance()
+    assert new_balance  == accounts[2].balance()
+    assert market_contract.accountDeliverables(accounts[1]) == 1
+    assert market_contract.farmDeliverables(token_id) == 1
+    sealed_tx = booking_fee - web3.toWei(0.0037, 'ether')
+    assert market_contract.platformTransactions() == sealed_tx
 
