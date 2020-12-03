@@ -31,6 +31,9 @@ struct Book:
   marketId: uint256
   harvestId: bytes32
 
+# @dev Market fee
+MARKET_FEE: constant(uint256) = as_wei_value(0.0037, 'ether')
+
 # @dev Sealed platform tx
 platformTx: uint256
 
@@ -69,9 +72,14 @@ previousMarkets: HashMap[uint256, HashMap[uint256, Market]]
 
 # @dev Index all bookings to address
 totalBookerBookings: HashMap[address, uint256] # address => total number of booker bookings
-bookerBooking: HashMap[address, HashMap[uint256, Book]] # address => seasonNo[_tokenId]: index => Booking{}
+bookerBooking: HashMap[address, HashMap[uint256, Book]] # address => seasonNo: index => Booking{}
 seasonsBooked: HashMap[address, HashMap[uint256, uint256]] # seasons booked indexed by totalBookerBookings
 bookedSeason: HashMap[address, HashMap[uint256, bool]] # Season booked mapped to True of False
+
+# @dev Delivered bookings for platform, market, and booker
+bookerDelivery: HashMap[address, uint256]
+marketDelivery: HashMap[uint256, uint256]
+completedDelivery: uint256
 
 # @dev Market booking: market => index => Book
 marketBooking: HashMap[uint256, HashMap[uint256, Book]]
@@ -301,6 +309,25 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   (self.marketBookingIndex[_tokenId])[_runningSeason] = self.farmMarket[_tokenId].bookers
   (self.marketBooking[_tokenId])[self.farmMarket[_tokenId].bookers] = (self.bookerBooking[msg.sender])[_runningSeason]
 
+# @dev Burn booker booking
+# @param _tokenId Tokenized farm ID
+# @param _booker Booker address
+# @param _seasonNo Season booked
+# @param _volume Volume to burn
+@internal
+def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256) -> (uint256, uint256, uint256):
+  burningDeposit: uint256 = self.farmMarket[_tokenId].price * _volume
+  # Burn booker deposit
+  (self.bookerBooking[_booker])[_seasonNo].deposit -= burningDeposit
+  # Burn booker volume
+  (self.bookerBooking[_booker])[_seasonNo].volume -= _volume
+  # Calculate farm dues
+  farmDues: uint256 = burningDeposit - MARKET_FEE
+  # Calculate provider fee
+  providerFee: uint256 = burningDeposit - farmDues
+  # Return farm overdues
+  return burningDeposit, farmDues, providerFee
+
 # @dev Confirm receivership
 # @param _tokenId Tokenized farm id
 # @param _volume Booking volume to confirm
@@ -311,21 +338,49 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
 # Throw if `_volume == 0`
 # Throw if `registryInterface.exists(_tokenId) == False`
 # Throw if `_seasonNo > seasonInterface.currentSeason(_tokenId)`
-#@external
-#def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _farmer: address):
- # assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
-  #assert (self.bookerBookings[msg.sender])[_seasonNo].volume != 0 # dev: no bookings
-  #assert _volume <= (self.bookerBookings[msg.sender])[_seasonNo].volume
-  #farmOverdues: uint256 = 0
-  #farmOverdues = self.burnBooking(_tokenId, msg.sender, _seasonNo, _volume)
-  # Transfer dues
-  #send(_farmer, farmOverdues)
+@external
+@payable
+def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _farmer: address, _provider: address):
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
+  assert _volume != 0 # dev: volume cannot be 0
+  assert (self.bookerBooking[msg.sender])[_seasonNo].volume != 0 # dev: no bookings
+  assert _volume <= (self.bookerBooking[msg.sender])[_seasonNo].volume # dev: volume out of range
+  assert msg.value == MARKET_FEE # dev: insufficient confirmation fee
+  burningDeposit: uint256 = 0
+  farmDues: uint256 = 0
+  providerFee: uint256 = 0
+  (burningDeposit, farmDues, providerFee) = self.burnBooking(_tokenId, msg.sender, _seasonNo, _volume)
+  # Update seal deals tx
+  self.farmTx[_tokenId] += burningDeposit - MARKET_FEE
+  self.accountTx[msg.sender] += burningDeposit - MARKET_FEE
+  self.platformTx += burningDeposit - MARKET_FEE
   # Update delivered booking for booker
-  #self.bookerDelivery[msg.sender] += 1
-  # Update delivered booking for farm
-  #self.tokenizedFarmDelivery[_tokenId] += 1
+  self.bookerDelivery[msg.sender] += 1
+  # Update delivered booking for farm market
+  self.marketDelivery[_tokenId] += 1
   # Update total receivership
-  #self.completedDelivery += 1
+  self.completedDelivery += 1
+  # Transfer dues
+  send(_farmer, farmDues)
+  send(_provider, providerFee)
   # Log event
-  #log Receivership((self.bookerBookings[msg.sender])[_seasonNo].volume, (self.bookerBookings[msg.sender])[_seasonNo].deposit)
+  # log Receivership((self.bookerBookings[msg.sender])[_seasonNo].volume, (self.bookerBookings[msg.sender])[_seasonNo].deposit)
+
+# @dev Get total delivery for an account
+# @param _address Address of the account
+# @return uint256
+@external
+@view
+def accountDeliverables(_address: address) -> uint256:
+  return self.bookerDelivery[_address]
+
+# @dev Get total delivery for a tokenized farm
+# @param _tokenId Tokenized farm id
+# Throw if `farmContract.exists(_tokenId) == False`
+# @return uint256
+@external
+@view
+def farmDeliverables(_tokenId: uint256) -> uint256:
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm id
+  return self.marketDelivery[_tokenId]
 

@@ -25,10 +25,6 @@ event Harvesting:
   _tokenId: indexed(uint256)
   _season: indexed(String[20])
 
-event Receivership:
-  volume: uint256
-  deposit: uint256
-
 # State data
 
 # @dev Total farm state count
