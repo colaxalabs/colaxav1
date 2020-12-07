@@ -2,6 +2,19 @@ import pytest
 
 import brownie
 
+farmDict = {
+    'tokenId': 0,
+    'name': 1,
+    'size': 2,
+    'location': 3,
+    'imageHash': 4,
+    'soil': 5,
+    'season': 6,
+    'owner': 7,
+    'userIndex': 8,
+    'platformIndex': 9
+}
+
 token_id = 293730023
 
 @pytest.fixture
@@ -9,7 +22,7 @@ def frmregistry_contract(FRMRegistry, accounts):
     yield FRMRegistry.deploy({'from': accounts[0]})
 
 def tokenize_farm(frmregistry_contract, accounts):
-    tx = frmregistry_contract.tokenizeLand('Arunga Vineyard', '294.32ha', '36.389223', '-1.282883', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
+    tx = frmregistry_contract.tokenizeLand('Arunga Vineyard', '294.32ha', 'Lyaduywa, Kenya', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
     return tx
 
 def test_initial_state(frmregistry_contract):
@@ -76,9 +89,10 @@ def test_query_farms_belonging_to_an_account(frmregistry_contract, accounts):
 
     assert user_total_farm == 1
     assert len(user_farms) == 1
-    assert user_farms[0][0] == token_id
-    assert user_farms[0][1] == 'Arunga Vineyard'
-    assert user_farms[0][7] == 'Dormant'
+    assert user_farms[0][farmDict['tokenId']] == token_id
+    assert user_farms[0][farmDict['name']] == 'Arunga Vineyard'
+    assert user_farms[0][farmDict['season']] == 'Dormant'
+    assert user_farms[0][farmDict['location']] == 'Lyaduywa, Kenya'
 
 def test_query_all_tokenized_farms(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
@@ -89,9 +103,10 @@ def test_query_all_tokenized_farms(frmregistry_contract, accounts):
 
     assert total_indexed_farms == 1
     assert len(indexed_farms) == 1
-    assert indexed_farms[0][0] == token_id
-    assert indexed_farms[0][1] == 'Arunga Vineyard'
-    assert indexed_farms[0][7] == 'Dormant'
+    assert indexed_farms[0][farmDict['tokenId']] == token_id
+    assert indexed_farms[0][farmDict['name']] == 'Arunga Vineyard'
+    assert indexed_farms[0][farmDict['season']] == 'Dormant'
+    assert indexed_farms[0][farmDict['location']] == 'Lyaduywa, Kenya'
 
 def test_get_tokenized_farm_state(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
