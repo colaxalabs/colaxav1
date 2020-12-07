@@ -31,8 +31,7 @@ struct Farm:
   tokenId: uint256
   name: String[100]
   size: String[20]
-  longitude: String[100]
-  latitude: String[100]
+  location: String[225]
   imageHash: String[255]
   soil: String[20]
   season: String[20]
@@ -356,7 +355,7 @@ def burn(_tokenId: uint256):
 # @param _soil Farm land soil type
 # @dev Throw if `_tokenId` is already minted
 @external
-def tokenizeLand(_name: String[100], _size: String[20], _longitude: String[100], _latitude: String[100], _imageHash: String[255], _soil: String[20], _tokenId: uint256):
+def tokenizeLand(_name: String[100], _size: String[20], _location: String[225], _imageHash: String[255], _soil: String[20], _tokenId: uint256):
   # Check token id is valid
   # Mint token
   self.mint(msg.sender, _tokenId)
@@ -366,8 +365,7 @@ def tokenizeLand(_name: String[100], _size: String[20], _longitude: String[100],
     tokenId: _tokenId,
     name: _name,
     size: _size,
-    longitude: _longitude,
-    latitude: _latitude,
+    location: _location,
     imageHash: _imageHash,
     soil: _soil,
     season: 'Dormant',
