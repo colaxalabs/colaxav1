@@ -27,7 +27,7 @@ token_id = 4863475
 @pytest.fixture
 def season_contract(Season, FRMRegistry, accounts):
     frmregistry_contract = FRMRegistry.deploy({'from': accounts[0]})
-    frmregistry_contract.tokenizeLand('Arunga Vineyard', '294.32ha', '36.389223', '-1.282883', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
+    frmregistry_contract.tokenizeLand('Arunga Vineyard', '294.32ha', 'Lyaduywa, Kenya', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
     yield Season.deploy(frmregistry_contract.address, {'from': accounts[0]})
 
 def test_initial_state(season_contract):

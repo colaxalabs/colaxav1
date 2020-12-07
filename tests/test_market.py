@@ -6,7 +6,7 @@ token_id = 4863475
 @pytest.fixture
 def market_contract(FRMRegistry, Season, Market, accounts, web3):
     farm_registry = FRMRegistry.deploy({'from': accounts[0]})
-    farm_registry.tokenizeLand('Arunga Vineyard', '294.32ha', '36.389223', '-1.282883', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
+    farm_registry.tokenizeLand('Arunga Vineyard', '294.32ha', 'Lyaduywa, Kenya', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
     season_contract = Season.deploy(farm_registry.address, {'from': accounts[0]})
     season_contract.openSeason(token_id)
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
