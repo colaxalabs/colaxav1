@@ -139,17 +139,25 @@ def openSeason(_tokenId: uint256):
 # @param _crop Crop for new plantings
 # @param _preparationFertilizer Fertilizer used during preparation
 # @param _preparationFertilizerSupplier Supplier of the preparation fertilizer
+# @param _txBinding Proof of Tx btwn farmer and supplier
 @external
-def confirmPreparations(_tokenId: uint256, _crop: String[225], _preparationFertilizer: String[225], _preparationFertilizerSupplier: String[225]):
-  assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm preparations
-  assert self.farmContract.getTokenState(_tokenId) == 'Preparation' # dev: state is not preparations
-  _runningSeason: uint256 = self.runningSeason[_tokenId]
-  (self.seasonData[_tokenId])[_runningSeason].crop = _crop
-  (self.seasonData[_tokenId])[_runningSeason].preparationFertilizer = _preparationFertilizer
-  (self.seasonData[_tokenId])[_runningSeason].preparationFertilizerSupplier = _preparationFertilizerSupplier
-  (self.seasonData[_tokenId])[_runningSeason].preparationDate = block.timestamp
-  # Transition state
-  self.farmContract.transitionState(_tokenId, 'Planting', msg.sender)
+def confirmPreparations(
+    _tokenId: uint256,
+    _crop: String[225],
+    _preparationFertilizer: String[225],
+    _preparationFertilizerSupplier: String[225],
+    _txBinding: String[225]
+  ):
+    assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm preparations
+    assert self.farmContract.getTokenState(_tokenId) == 'Preparation' # dev: state is not preparations
+    _runningSeason: uint256 = self.runningSeason[_tokenId]
+    (self.seasonData[_tokenId])[_runningSeason].crop = _crop
+    (self.seasonData[_tokenId])[_runningSeason].preparationFertilizer = _preparationFertilizer
+    (self.seasonData[_tokenId])[_runningSeason].preparationFertilizerSupplier = _preparationFertilizerSupplier
+    (self.seasonData[_tokenId])[_runningSeason].preparationFertilizerProof = _txBinding
+    (self.seasonData[_tokenId])[_runningSeason].preparationDate = block.timestamp
+    # Transition state
+    self.farmContract.transitionState(_tokenId, 'Planting', msg.sender)
 
 # @dev Confirm planting
 # @param _tokenId Tokenized farm ID
@@ -158,35 +166,59 @@ def confirmPreparations(_tokenId: uint256, _crop: String[225], _preparationFerti
 # @param _expectedYield Seeds used expected yield
 # @param _plantingFertilizer Fertilizer used during planting
 # @param _plantingFertilizerSupplier Fertilizer supplier used during planting
+# @param _seedProof Proof binding btwn farmer and seeds supplier
+# @param _plantingFertilizerProof Proof binding btwn farmer and planting fertilizer supplier
 @external
-def confirmPlanting(_tokenId: uint256, _seedsUsed: String[225], _seedsSupplier: String[225], _expectedYield: String[50], _plantingFertilizer: String[225], _plantingFertilizerSupplier: String[225]):
-  assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm planting
-  assert self.farmContract.getTokenState(_tokenId) == 'Planting' # dev: state is not planting
-  _runningSeason: uint256 = self.runningSeason[_tokenId]
-  (self.seasonData[_tokenId])[_runningSeason].seedsUsed = _seedsUsed
-  (self.seasonData[_tokenId])[_runningSeason].seedsSupplier = _seedsSupplier
-  (self.seasonData[_tokenId])[_runningSeason].expectedYield = _expectedYield
-  (self.seasonData[_tokenId])[_runningSeason].plantingFertilizer = _plantingFertilizer
-  (self.seasonData[_tokenId])[_runningSeason].plantingFertilizerSupplier = _plantingFertilizerSupplier
-  (self.seasonData[_tokenId])[_runningSeason].plantingDate = block.timestamp
-  # Transition state
-  self.farmContract.transitionState(_tokenId, 'Crop Growth', msg.sender)
+def confirmPlanting(
+    _tokenId: uint256,
+    _seedsUsed: String[225],
+    _seedsSupplier: String[225],
+    _seedProof: String[225],
+    _expectedYield: String[50],
+    _plantingFertilizer: String[225],
+    _plantingFertilizerSupplier: String[225],
+    _plantingFertilizerSupplierProof: String[225]
+  ):
+    assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm planting
+    assert self.farmContract.getTokenState(_tokenId) == 'Planting' # dev: state is not planting
+    _runningSeason: uint256 = self.runningSeason[_tokenId]
+    (self.seasonData[_tokenId])[_runningSeason].seedsUsed = _seedsUsed
+    (self.seasonData[_tokenId])[_runningSeason].seedsSupplier = _seedsSupplier
+    (self.seasonData[_tokenId])[_runningSeason].seedProof = _seedProof
+    (self.seasonData[_tokenId])[_runningSeason].expectedYield = _expectedYield
+    (self.seasonData[_tokenId])[_runningSeason].plantingFertilizer = _plantingFertilizer
+    (self.seasonData[_tokenId])[_runningSeason].plantingFertilizerSupplier = _plantingFertilizerSupplier
+    (self.seasonData[_tokenId])[_runningSeason].plantingFertilizerProof = _plantingFertilizerSupplierProof
+    (self.seasonData[_tokenId])[_runningSeason].plantingDate = block.timestamp
+    # Transition state
+    self.farmContract.transitionState(_tokenId, 'Crop Growth', msg.sender)
 
 # @dev Confirm crop growth
 # @param _tokenId Tokenized farm ID
 # @param _pesticideUsed Pesticide used
 # @param _pesticideSupplier Pesticide supplier
+# @param _image Image of the disease of weed
+# @param _proofOfTxForPesticide Proof binding btwn farmer and pesticide supplier
 @external
-def confirmGrowth(_tokenId: uint256, _pestOrVirus: String[225], _pesticideUsed: String[225], _pesticideSupplier: String[225]):
-  assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm crop growth
-  assert self.farmContract.getTokenState(_tokenId) == 'Crop Growth' # dev: state is not crop growth
-  _runningSeason: uint256 = self.runningSeason[_tokenId]
-  (self.seasonData[_tokenId])[_runningSeason].pestOrVirus = _pestOrVirus
-  (self.seasonData[_tokenId])[_runningSeason].pesticideUsed = _pesticideUsed
-  (self.seasonData[_tokenId])[_runningSeason].pesticideSupplier = _pesticideSupplier
-  (self.seasonData[_tokenId])[_runningSeason].growthDate = block.timestamp
-  # Transition state
-  self.farmContract.transitionState(_tokenId, 'Harvesting', msg.sender)
+def confirmGrowth(
+    _tokenId: uint256,
+    _pestOrVirus: String[225],
+    _image: String[225],
+    _pesticideUsed: String[225],
+    _pesticideSupplier: String[225],
+    _proofOfTxForPesticide: String[225]
+  ):
+    assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm crop growth
+    assert self.farmContract.getTokenState(_tokenId) == 'Crop Growth' # dev: state is not crop growth
+    _runningSeason: uint256 = self.runningSeason[_tokenId]
+    (self.seasonData[_tokenId])[_runningSeason].pestOrVirus = _pestOrVirus
+    (self.seasonData[_tokenId])[_runningSeason].pesticideImage = _image
+    (self.seasonData[_tokenId])[_runningSeason].pesticideUsed = _pesticideUsed
+    (self.seasonData[_tokenId])[_runningSeason].pesticideSupplier = _pesticideSupplier
+    (self.seasonData[_tokenId])[_runningSeason].proofOfTxForPesticide = _proofOfTxForPesticide
+    (self.seasonData[_tokenId])[_runningSeason].growthDate = block.timestamp
+    # Transition state
+    self.farmContract.transitionState(_tokenId, 'Harvesting', msg.sender)
 
 # @dev Confirm harvesting
 # @param _tokenId Tokenized farm ID
@@ -194,7 +226,7 @@ def confirmGrowth(_tokenId: uint256, _pestOrVirus: String[225], _pesticideUsed: 
 # @param _harvestUnit Harvest supply unit
 # @param _unitPrice Harvest price per unit
 @external
-def confirmHarvesting(_tokenId: uint256, _harvestSupply: uint256, _harvestUnit: String[100], _unitPrice: uint256, _fileHash: String[225]):
+def confirmHarvesting(_tokenId: uint256):
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm harvesting
   assert self.farmContract.getTokenState(_tokenId) == 'Harvesting' # dev: state is not harvesting
   _runningSeason: uint256 = self.runningSeason[_tokenId]
@@ -238,7 +270,7 @@ def getFarmCompleteSeasons(_tokenId: uint256) -> uint256:
 @external
 def closeSeason(_tokenId: uint256):
   assert self.farmContract.exists(_tokenId) == True
-  assert self.farmContract.getTokenState(_tokenId) == 'Harvesting' or self.farmContract.getTokenState(_tokenId) == 'Marketing' # dev: is not harvesting
+  assert self.farmContract.getTokenState(_tokenId) == 'Marketing' # dev: is not harvesting
   # Is market supply exhausted?
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can close shop
   self.farmContract.transitionState(_tokenId, 'Dormant', msg.sender)

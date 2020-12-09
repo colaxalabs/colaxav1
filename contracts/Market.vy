@@ -180,7 +180,7 @@ def getMarketBooking(_tokenId: uint256, _index: uint256) -> Book:
 def createMarket(_tokenId: uint256, _price: uint256, _supply: uint256, _unit: String[2]):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can create market
-  assert self.seasonContract.getSeason(_tokenId) == 'Harvesting'
+  assert self.seasonContract.getSeason(_tokenId) == 'Marketing'
   assert self.farmMarket[_tokenId].remainingSupply == 0 # dev: exhaust previous market supply
   # Market count
   if self.isMarket[_tokenId] == False:
