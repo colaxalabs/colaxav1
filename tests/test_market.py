@@ -4,16 +4,15 @@ import brownie
 token_id = 4863475
 
 @pytest.fixture
-def market_contract(FRMRegistry, Season, Market, accounts, web3):
+def market_contract(FRMRegistry, Season, Market, accounts):
     farm_registry = FRMRegistry.deploy({'from': accounts[0]})
     farm_registry.tokenizeLand('Arunga Vineyard', '294.32ha', 'Lyaduywa, Kenya', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
     season_contract = Season.deploy(farm_registry.address, {'from': accounts[0]})
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Infestor x32H', 'Aphids Supplier')
-    _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmHarvesting(token_id)
     yield Market.deploy(farm_registry.address, season_contract.address, {'from': accounts[0]})
 
 def test_initial_state(market_contract):

@@ -101,7 +101,7 @@ def test_season_preparation(season_contract):
     # Assertions
     assert season_contract.currentSeason(token_id) == 1
 
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
 
     total_complete_season = season_contract.currentSeason(token_id)
     season_data = list()
@@ -113,11 +113,12 @@ def test_season_preparation(season_contract):
     assert season_data[0][seasonDict['crop']] == 'Tomatoe'
     assert season_data[0][seasonDict['preparationFertilizer']] == 'Organic Fertilizer'
     assert season_data[0][seasonDict['preparationFertilizerSupplier']] == 'Cow Shed Manure'
+    assert season_data[0][seasonDict['preparationFertilizerProof']] == 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789'
 
 def test_season_planting(season_contract):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
 
     total_complete_season = season_contract.currentSeason(token_id)
     season_data = list()
@@ -132,9 +133,9 @@ def test_season_planting(season_contract):
 #
 def test_season_crop_growth(season_contract):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Infestor x32H', 'Aphids Supplier')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
 
     total_complete_season = season_contract.currentSeason(token_id)
     season_data = list()
@@ -147,13 +148,12 @@ def test_season_crop_growth(season_contract):
     assert season_data[0][seasonDict['pesticideUsed']] == 'Infestor x32H'
     assert season_data[0][seasonDict['pesticideSupplier']] == 'Aphids Supplier'
 #
-def test_season_harvesting(season_contract, web3):
+def test_season_harvesting(season_contract):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Infestor x32H', 'Aphids Supplier')
-    _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmHarvesting(token_id)
 
     total_complete_season = season_contract.currentSeason(token_id)
     season_data = list()
@@ -168,31 +168,27 @@ def test_season_harvesting(season_contract, web3):
 
 def test_unrestricted_season_harvesting(season_contract):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
     with brownie.reverts('dev: state is not crop growth'):
-        season_contract.confirmGrowth(token_id, 'Army worm', 'Infestor x32H', 'Aphids Supplier')
+        season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
 
-def test_season_closure(season_contract, accounts, web3):
+def test_season_closure(season_contract, accounts):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
-    _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
-    _price = web3.toWei(1, 'ether')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmHarvesting(token_id)
     season_contract.closeSeason(token_id, {'from': accounts[0]})
 
     # Assertions
     assert season_contract.getSeason(token_id) == 'Dormant'
 
-def test_unrestricted_season_closure(season_contract, accounts, web3):
+def test_unrestricted_season_closure(season_contract, accounts):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
-    _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
-    _price = web3.toWei(1, 'ether')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmHarvesting(token_id)
 
     # Error assertions
     with brownie.reverts('dev: only owner can close shop'):
@@ -240,48 +236,44 @@ def test_resolve_unhashed_season(season_contract):
     with brownie.reverts('dev: invalid season'):
         season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id))
 
-def test_hash_season_data(season_contract, accounts, web3):
+def test_hash_season_data(season_contract):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
-    _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmHarvesting(token_id)
 
     # Assertions
     assert season_contract.resolvedHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id))) == True
 
-def test_invalid_season_to_hash(season_contract, accounts, web3):
+def test_invalid_season_to_hash(season_contract):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
-    _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmHarvesting(token_id)
 
     # Error assertions
     with brownie.reverts():
         season_contract.hashedSeason(token_id, 22)
 
-def test_invalid_token_id_for_season_hash(season_contract, accounts, web3):
+def test_invalid_token_id_for_season_hash(season_contract):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
-    _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmHarvesting(token_id)
 
     # Error assertions
     with brownie.reverts():
         season_contract.hashedSeason(32, 1)
 
-def test_trace_season_hash(season_contract, accounts, web3):
+def test_trace_season_hash(season_contract):
     season_contract.openSeason(token_id)
-    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure Supplier')
-    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier')
-    season_contract.confirmGrowth(token_id, 'Army worm', 'Aphids', 'Aphids Supplier')
-    _price = web3.toWei(1, 'ether')
-    season_contract.confirmHarvesting(token_id, 5, 'kg', _price, 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmHarvesting(token_id)
 
     # Trace
     season_data = season_contract.resolveSeasonHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id)))
