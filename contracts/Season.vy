@@ -68,6 +68,7 @@ struct SeasonData:
   growthDate: uint256
   # Confirm harvesting
   harvestDate: uint256
+  harvestSupply: String[225]
   traceHash: bytes32
 
 # @dev Map season data to farm
@@ -226,12 +227,13 @@ def confirmGrowth(
 # @param _harvestUnit Harvest supply unit
 # @param _unitPrice Harvest price per unit
 @external
-def confirmHarvesting(_tokenId: uint256):
+def confirmHarvesting(_tokenId: uint256, _supply: String[225]):
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can confirm harvesting
   assert self.farmContract.getTokenState(_tokenId) == 'Harvesting' # dev: state is not harvesting
   _runningSeason: uint256 = self.runningSeason[_tokenId]
   # When was the harvest date
   (self.seasonData[_tokenId])[_runningSeason].harvestDate = block.timestamp
+  (self.seasonData[_tokenId])[_runningSeason].harvestSupply = _supply
   # Hash season data after harvest confirmation
   _tr: uint256 = _tokenId + _runningSeason
   _trHash: bytes32 = convert(_tr, bytes32)
