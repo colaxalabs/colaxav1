@@ -52,6 +52,9 @@ seasonContract: Season
 # @dev Total number of markets
 markets: uint256
 
+# @dev Season went to market farm => season => True/False
+marketedSeason: HashMap[uint256, HashMap[uint256, bool]]
+
 # @dev Enlisted marketplace: index => Market
 enlistedMarkets: HashMap[uint256, Market]
 
@@ -118,6 +121,16 @@ def userTransactions(_address: address) -> uint256:
 def farmTransactions(_tokenId: uint256) -> uint256:
   assert self.farmContract.exists(_tokenId) == True
   return self.farmTx[_tokenId]
+
+# @dev Check if a season has gone to market
+# @param _tokenId Tokenized farm ID
+# @param _seasonNo Current farm season number
+@external
+@view
+def isSeasonMarketed(_tokenId: uint256, _seasonNo: uint256) -> bool:
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm id
+  assert _seasonNo <= self.seasonContract.currentSeason(_tokenId) # dev: season number out of range
+  return self.marketedSeason[_tokenId][_seasonNo]
 
 # @dev Get total markets
 # @return uint256
@@ -187,7 +200,6 @@ def createMarket(_tokenId: uint256, _price: uint256, _supply: uint256, _unit: St
     self.markets += 1
     self.marketId[_tokenId] = self.markets
     self.isMarket[_tokenId] = True
-  # Farm market ID
   # Store market
   self.farmMarket[_tokenId] = Market({
     price: _price,
@@ -198,6 +210,8 @@ def createMarket(_tokenId: uint256, _price: uint256, _supply: uint256, _unit: St
     closeDate: 0,
     bookers: 0
   })
+  # Marketed seasons
+  self.marketedSeason[_tokenId][self.seasonContract.currentSeason(_tokenId)] = True
   # Update enlisted markets
   self.enlistedMarkets[self.marketId[_tokenId]] = self.farmMarket[_tokenId]
 
