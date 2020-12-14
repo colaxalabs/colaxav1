@@ -32,6 +32,7 @@ def test_create_market(market_contract, accounts, web3):
     assert market_contract.totalMarkets() == 1
     assert market['price'] == _price
     assert market['remainingSupply'] == 3
+    assert market_contract.isSeasonMarketed(token_id, 1) == True
 
 def test_query_current_farm_market(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
