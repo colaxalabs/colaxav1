@@ -282,6 +282,5 @@ def test_trace_season_hash(season_contract):
 
     # Assertions
     assert season_contract.tracesPerHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id))) == 1
-    assert season_data.return_value['crop'] == 'Tomatoe'
-    assert season_data.return_value['expectedYield'] == '1200kg'
+    assert season_contract.allTraces() == 1
 

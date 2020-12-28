@@ -309,7 +309,10 @@ def resolvedHash(_hash: bytes32) -> bool:
 def resolveSeasonHash(_hash: bytes32) -> SeasonData:
   assert _hash != EMPTY_BYTES32
   assert self.resolvedHashes[_hash] == True
+  # Count traces per hash
   self.hashTraces[_hash] += 1
+  # Count total performed trace
+  self.totalTraces += 1
   return self.seasonDataHash[_hash]
 
 # @dev Total tracing per hash
