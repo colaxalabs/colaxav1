@@ -77,9 +77,6 @@ seasonData: HashMap[uint256, HashMap[uint256, SeasonData]]
 # @dev Farm registry interface variable
 farmContract: Frmregistry
 
-# @dev All traces
-totalTraces: uint256
-
 # @dev Resolved hashes
 resolvedHashes: HashMap[bytes32, bool]
 
@@ -88,12 +85,6 @@ seasonHash: HashMap[uint256, HashMap[uint256, bytes32]]
 
 # @dev Season data hashing
 seasonDataHash: HashMap[bytes32, SeasonData]
-
-# @dev Season data hash traces
-hashTraces: HashMap[bytes32, uint256]
-
-# @dev Tokenized farm traces
-harvestTraces: HashMap[uint256, uint256]
 
 @external
 def __init__(registry_contract_address: address):
@@ -277,22 +268,6 @@ def closeSeason(_tokenId: uint256):
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can close shop
   self.farmContract.transitionState(_tokenId, 'Dormant', msg.sender)
 
-# @dev Get traces
-# @return uint256
-@external
-@view
-def allTraces() -> uint256:
-  return self.totalTraces
-
-# @dev Get farm traces
-# @param _tokenId Tokenized farm id
-# @return uint256
-@external
-@view
-def farmTraces(_tokenId: uint256) -> uint256:
-  assert self.farmContract.exists(_tokenId) == True
-  return self.harvestTraces[_tokenId]
-
 # @dev Season data hash status
 # @param _hash Season data hash
 @external
@@ -306,25 +281,11 @@ def resolvedHash(_hash: bytes32) -> bool:
 # @return SeasonData
 # Throw if `self.resolvedHashes[_hash] == False`
 @external
+@view
 def resolveSeasonHash(_hash: bytes32) -> SeasonData:
   assert _hash != EMPTY_BYTES32
   assert self.resolvedHashes[_hash] == True
-  # Count traces per hash
-  self.hashTraces[_hash] += 1
-  # Count total performed trace
-  self.totalTraces += 1
   return self.seasonDataHash[_hash]
-
-# @dev Total tracing per hash
-# @param _hash Season data hash
-# @return uint256
-# Throw if `self.resolvedHashes[_hash] == False`
-@external
-@view
-def tracesPerHash(_hash: bytes32) -> uint256:
-  assert _hash != EMPTY_BYTES32
-  assert self.resolvedHashes[_hash] == True
-  return self.hashTraces[_hash]
 
 # @dev Get farm season data hash
 # @param _tokenId Tokenized farm id
