@@ -12,6 +12,7 @@ interface Season:
 
 # @dev Market
 struct Market:
+  crop: String[225]
   price: uint256
   supplyUnit: String[2]
   openDate: uint256
@@ -190,7 +191,7 @@ def getMarketBooking(_tokenId: uint256, _index: uint256) -> Book:
 # @param _supply Supply
 # @param _unit Supply unit(kilogram)
 @external
-def createMarket(_tokenId: uint256, _price: uint256, _supply: uint256, _unit: String[2]):
+def createMarket(_tokenId: uint256, _crop: String[225], _price: uint256, _supply: uint256, _unit: String[2]):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can create market
   assert self.seasonContract.getSeason(_tokenId) == 'Marketing'
@@ -202,6 +203,7 @@ def createMarket(_tokenId: uint256, _price: uint256, _supply: uint256, _unit: St
     self.isMarket[_tokenId] = True
   # Store market
   self.farmMarket[_tokenId] = Market({
+    crop: _crop,
     price: _price,
     supplyUnit: _unit,
     originalSupply: _supply,
@@ -276,6 +278,7 @@ def totalMarketBookers(_tokenId: uint256) -> uint256:
 def burnSupply(_tokenId: uint256, _volume: uint256):
   self.farmMarket[_tokenId].remainingSupply -= _volume
   if self.farmMarket[_tokenId].remainingSupply == 0:
+    self.farmMarket[_tokenId].closeDate = block.timestamp
     self.totalPrevMarkets[_tokenId] += 1
     (self.previousMarkets[_tokenId])[self.totalPrevMarkets[_tokenId]] = self.farmMarket[_tokenId]
 
