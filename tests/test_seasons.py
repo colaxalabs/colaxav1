@@ -196,19 +196,6 @@ def test_unrestricted_season_closure(season_contract, accounts):
     with brownie.reverts('dev: only owner can close shop'):
         season_contract.closeSeason(token_id, {'from': accounts[1]})
 
-def test_tracing_initial_state(season_contract):
-    season_contract.openSeason(token_id)
-
-    # Assertions
-    assert season_contract.allTraces() == 0
-    assert season_contract.farmTraces(token_id) == 0
-
-def test_tracing_invalid_tokenized_farm(season_contract):
-
-    # Error assertions
-    with brownie.reverts():
-        season_contract.farmTraces(32)
-
 def test_invalid_season_hash(season_contract):
 
     # Error assertions
@@ -219,17 +206,6 @@ def test_resolve_unresolved_invalid_hash(season_contract):
 
     # Assertions
     season_contract.resolvedHash('0xe91c254ad58860a02c788dfb5c1a65d6a8846ab1dc649631c7db16fef4af2dec') == False
-
-def test_tracing_count_for_invalid_hash(season_contract):
-
-    # Error assertions
-    with brownie.reverts():
-        season_contract.tracesPerHash('0xe91c254ad58860a02c788dfb5c1a65d6a8846ab1dc649631c7db16fef4af2dec')
-
-def test_traces_count_for_tokenized_farm(season_contract):
-
-    # Assertions
-    assert season_contract.farmTraces(token_id) == 0
 
 def test_resolve_unhashed_season(season_contract):
     season_contract.openSeason(token_id)
@@ -281,6 +257,6 @@ def test_trace_season_hash(season_contract):
     season_data = season_contract.resolveSeasonHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id)))
 
     # Assertions
-    assert season_contract.tracesPerHash(season_contract.hashedSeason(token_id, season_contract.currentSeason(token_id))) == 1
-    assert season_contract.allTraces() == 1
+    assert season_data['crop'] == 'Tomatoe'
+    assert season_data['harvestSupply'] == '120 KG'
 
