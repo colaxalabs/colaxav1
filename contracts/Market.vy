@@ -13,6 +13,7 @@ interface Season:
 # @dev Market
 struct Market:
   tokenId: uint256
+  season: uint256
   crop: String[225]
   price: uint256
   supplyUnit: String[2]
@@ -205,6 +206,7 @@ def createMarket(_tokenId: uint256, _crop: String[225], _price: uint256, _supply
   # Store market
   self.farmMarket[_tokenId] = Market({
     tokenId: _tokenId,
+    season: self.seasonContract.currentSeason(_tokenId),
     crop: _crop,
     price: _price,
     supplyUnit: _unit,
