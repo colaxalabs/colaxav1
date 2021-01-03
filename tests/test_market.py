@@ -26,7 +26,7 @@ def test_create_market(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
     market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
     # Query market
-    market = market_contract.getEnlistedMarket(1)
+    market = market_contract.getCurrentFarmMarket(token_id)
 
     # Assertions
     assert market_contract.totalMarkets() == 1
@@ -67,7 +67,7 @@ def test_query_enlisted_markets(market_contract, accounts, web3):
     markets = list()
     totalMarkets = market_contract.totalMarkets()
     for i in range(1, totalMarkets+1):
-        market = market_contract.getEnlistedMarket(i)
+        market = market_contract.getCurrentFarmMarket(market_contract.getIndexedEnlistedMarket(i))
         markets.append(market)
 
     # Assertions
@@ -176,7 +176,7 @@ def test_receive_confirmation_with_invalid_tokenized_farm(market_contract, accou
 
     # Error assertion
     with brownie.reverts('dev: invalid token id'):
-        market_contract.confirmReceivership(77777777, 3, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.003, 'ether')})
+        market_contract.confirmReceivership(77777777, 3, 1, accounts[0], accounts[2], 'Rotten tomatoes', {'from': accounts[1], 'value': web3.toWei(0.003, 'ether')})
 
 def test_receive_confirmation_with_invalid_booker(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
@@ -188,7 +188,7 @@ def test_receive_confirmation_with_invalid_booker(market_contract, accounts, web
 
     # Error assertion
     with brownie.reverts('dev: no bookings'):
-        market_contract.confirmReceivership(token_id, 1, 1, accounts[0], accounts[2])
+        market_contract.confirmReceivership(token_id, 1, 1, accounts[0], accounts[2], 'Rotten tomatoes')
 
 def test_receive_confirmation_with_invalid_booking_volume(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
@@ -200,7 +200,7 @@ def test_receive_confirmation_with_invalid_booking_volume(market_contract, accou
 
     # Error assertion
     with brownie.reverts('dev: volume out of range'):
-        market_contract.confirmReceivership(token_id, 4, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.003, 'ether')})
+        market_contract.confirmReceivership(token_id, 4, 1, accounts[0], accounts[2], 'Rotten tomatoes', {'from': accounts[1], 'value': web3.toWei(0.003, 'ether')})
 
 def test_receive_confirmation_with_zero_booking_volume(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
@@ -212,7 +212,7 @@ def test_receive_confirmation_with_zero_booking_volume(market_contract, accounts
 
     # Error assertion
     with brownie.reverts('dev: volume cannot be 0'):
-        market_contract.confirmReceivership(token_id, 0, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.003, 'ether')})
+        market_contract.confirmReceivership(token_id, 0, 1, accounts[0], accounts[2], 'Rotten tomatoes', {'from': accounts[1], 'value': web3.toWei(0.003, 'ether')})
 
 def test_receive_confirmation_with_insufficient_booking_fee(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
@@ -224,7 +224,7 @@ def test_receive_confirmation_with_insufficient_booking_fee(market_contract, acc
 
     # Error assertion
     with brownie.reverts('dev: insufficient confirmation fee'):
-        market_contract.confirmReceivership(token_id, 2, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.002, 'ether')})
+        market_contract.confirmReceivership(token_id, 2, 1, accounts[0], accounts[2], 'Rotten tomatoes', {'from': accounts[1], 'value': web3.toWei(0.002, 'ether')})
 
 def test_receive_confirmation(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
@@ -237,7 +237,7 @@ def test_receive_confirmation(market_contract, accounts, web3):
     market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
 
     # Confirm receivership
-    market_contract.confirmReceivership(token_id, 1, 1, accounts[0], accounts[2], {'from': accounts[1], 'value': web3.toWei(0.0037, 'ether')})
+    market_contract.confirmReceivership(token_id, 1, 1, accounts[0], accounts[2], 'Rotten tomatoes', {'from': accounts[1], 'value': web3.toWei(0.0037, 'ether')})
 
     # Assertions
     new_balance = prev_balance + web3.toWei(0.0037, 'ether')
@@ -248,4 +248,44 @@ def test_receive_confirmation(market_contract, accounts, web3):
     assert market_contract.farmDeliverables(token_id) == 1
     sealed_tx = booking_fee - web3.toWei(0.0037, 'ether')
     assert market_contract.platformTransactions() == sealed_tx
+
+def test_get_review_for_invalid_tokenized_farm_market(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    prev_balance = accounts[2].balance()
+    prev_owner_balance = accounts[0].balance()
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Confirm receivership
+    market_contract.confirmReceivership(token_id, 1, 1, accounts[0], accounts[2], 'Rotten tomatoes', {'from': accounts[1], 'value': web3.toWei(0.0037, 'ether')})   
+
+    # Error assertion
+    with brownie.reverts('dev: invalid token id'):
+        market_contract.marketReviewCount(4)
+
+def test_get_market_review(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    prev_balance = accounts[2].balance()
+    prev_owner_balance = accounts[0].balance()
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Confirm receivership
+    market_contract.confirmReceivership(token_id, 1, 1, accounts[0], accounts[2], 'Rotten tomatoes', {'from': accounts[1], 'value': web3.toWei(0.0037, 'ether')})
+
+    # Get reviews for this market
+    reviews = market_contract.marketReviewCount(token_id)
+    allReviews = list()
+    for i in range(1, reviews+1):
+        allReviews.append(market_contract.getReviewForMarket(token_id, i))
+    # Assertions
+    assert reviews == 1
+    assert len(allReviews) == 1
+    assert allReviews[0][1] == 'Rotten tomatoes'
 
