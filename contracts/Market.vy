@@ -34,6 +34,12 @@ struct Book:
   marketId: uint256
   harvestId: bytes32
 
+# @dev Review
+struct Review:
+  date: uint256
+  comment: String[225]
+  reviewer: address
+
 # @dev Market fee
 MARKET_FEE: constant(uint256) = as_wei_value(0.0037, 'ether')
 
@@ -55,14 +61,20 @@ seasonContract: Season
 # @dev Total number of markets
 markets: uint256
 
+# @dev Index enlisted markets
+indexEnlistedMarkets: HashMap[uint256, uint256]
+
 # @dev Season went to market farm => season => True/False
 marketedSeason: HashMap[uint256, HashMap[uint256, bool]]
 
-# @dev Enlisted marketplace: index => Market
-enlistedMarkets: HashMap[uint256, Market]
-
 # @dev Farm market: tokenId => Market
 farmMarket: HashMap[uint256, Market]
+
+# @dev Count farm market reviews
+marketReview: HashMap[uint256, uint256]
+
+# @dev Market reviews
+review: HashMap[uint256, HashMap[uint256, Review]]
 
 # @dev Is market for farm created
 isMarket: HashMap[uint256, bool]
@@ -175,6 +187,16 @@ def getCurrentFarmMarket(_tokenId: uint256) -> Market:
   assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm
   return self.farmMarket[_tokenId]
 
+# @dev Get enlisted market index
+# @param _index Index of the enlisted market
+# Throw if `_index > self.markets`
+# @return uint256
+@external
+@view
+def getIndexedEnlistedMarket(_index: uint256) -> uint256:
+  assert _index <= self.markets
+  return self.indexEnlistedMarkets[_index]
+
 # @dev Get market booking
 # @param _tokenId Tokenized farm market ID
 # @param _index Index of the market in mapping
@@ -202,6 +224,7 @@ def createMarket(_tokenId: uint256, _crop: String[225], _price: uint256, _supply
   if self.isMarket[_tokenId] == False:
     self.markets += 1
     self.marketId[_tokenId] = self.markets
+    self.indexEnlistedMarkets[self.markets] = _tokenId
     self.isMarket[_tokenId] = True
   # Store market
   self.farmMarket[_tokenId] = Market({
@@ -218,18 +241,6 @@ def createMarket(_tokenId: uint256, _crop: String[225], _price: uint256, _supply
   })
   # Marketed seasons
   self.marketedSeason[_tokenId][self.seasonContract.currentSeason(_tokenId)] = True
-  # Update enlisted markets
-  self.enlistedMarkets[self.marketId[_tokenId]] = self.farmMarket[_tokenId]
-
-# @dev Get enlisted market
-# @param _index Index of the market
-# Throw if `_index > markets(totalMarkets)`
-# @return Market
-@external
-@view
-def getEnlistedMarket(_index: uint256) -> Market:
-  assert _index <= self.markets # dev: index out of range
-  return self.enlistedMarkets[_index]
 
 # @dev Mint season supply
 # @param _tokenId Tokenized farm ID
@@ -349,7 +360,40 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
   # Return farm overdues
   return burningDeposit, farmDues, providerFee
 
-# @dev Confirm receivership
+# @dev Leave a review for a market
+# @param _tokenId Tokenized farm market
+# @param _review Comment
+# @param _sender Reviewer
+# Throw if `self.farmContract.exists(_tokenId) == False`
+@internal
+def leaveReview(_tokenId: uint256, _review: String[225], _sender: address):
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
+  self.marketReview[_tokenId] += 1 # Count farm market review
+  (self.review[_tokenId])[self.marketReview[_tokenId]] = Review({ date: block.timestamp, comment: _review, reviewer: _sender })
+
+# @dev Get count for farm market review
+# @param _tokenId Tokenized farm market
+# Throw if `self.farmContract.exists(_tokenId) == False`
+# @return uint256
+@external
+@view
+def marketReviewCount(_tokenId: uint256) -> uint256:
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
+  return self.marketReview[_tokenId]
+
+# @dev Get farm market review
+# @param _tokenId Tokenized farm market
+# @param _index Index of the review
+# Throw if `_index > self.marketReview[_tokenId]`
+# @return uint256
+@external
+@view
+def getReviewForMarket(_tokenId: uint256, _index: uint256) -> Review:
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
+  assert _index <= self.marketReview[_tokenId] # dev: index out of range
+  return (self.review[_tokenId])[_index]
+
+# @dev Confirm receivership and leave a review
 # @param _tokenId Tokenized farm id
 # @param _volume Booking volume to confirm
 # @param _seasonNo Season number
@@ -361,7 +405,7 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
 # Throw if `_seasonNo > seasonInterface.currentSeason(_tokenId)`
 @external
 @payable
-def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _farmer: address, _provider: address):
+def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _farmer: address, _provider: address, _review: String[225]):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert _volume != 0 # dev: volume cannot be 0
   assert (self.bookerBooking[msg.sender])[_seasonNo].volume != 0 # dev: no bookings
@@ -381,6 +425,8 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
   self.marketDelivery[_tokenId] += 1
   # Update total receivership
   self.completedDelivery += 1
+  # Leave review
+  self.leaveReview(_tokenId, _review, msg.sender)
   # Transfer dues
   send(_farmer, farmDues)
   send(_provider, providerFee)
