@@ -38,7 +38,7 @@ struct Book:
 # @dev Review
 struct Review:
   date: uint256
-  comment: String[225]
+  comment: String[100]
   reviewer: address
 
 # @dev Market fee
@@ -322,15 +322,21 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   _runningSeason: uint256 = _tokenId + _seasonNo
   _harvestId: bytes32 = self.seasonContract.hashedSeason(_tokenId, _seasonNo)
   # Store booker bookings
-  (self.bookerBooking[msg.sender])[_runningSeason].date = block.timestamp
-  (self.bookerBooking[msg.sender])[_runningSeason].originalVolume += _volume
-  (self.bookerBooking[msg.sender])[_runningSeason].volume += _volume
-  (self.bookerBooking[msg.sender])[_runningSeason].delivered = False
-  (self.bookerBooking[msg.sender])[_runningSeason].deposit += msg.value
-  (self.bookerBooking[msg.sender])[_runningSeason].booker = msg.sender
-  (self.bookerBooking[msg.sender])[_runningSeason].marketId = _tokenId
-  (self.bookerBooking[msg.sender])[_runningSeason].season = _seasonNo
-  (self.bookerBooking[msg.sender])[_runningSeason].harvestId = _harvestId
+  if (self.bookerBooking[msg.sender])[_runningSeason].date == 0: # New book
+    (self.bookerBooking[msg.sender])[_runningSeason].date = block.timestamp
+    (self.bookerBooking[msg.sender])[_runningSeason].originalVolume += _volume
+    (self.bookerBooking[msg.sender])[_runningSeason].volume += _volume
+    (self.bookerBooking[msg.sender])[_runningSeason].delivered = False
+    (self.bookerBooking[msg.sender])[_runningSeason].deposit += msg.value
+    (self.bookerBooking[msg.sender])[_runningSeason].booker = msg.sender
+    (self.bookerBooking[msg.sender])[_runningSeason].marketId = _tokenId
+    (self.bookerBooking[msg.sender])[_runningSeason].season = _seasonNo
+    (self.bookerBooking[msg.sender])[_runningSeason].harvestId = _harvestId
+  else: # Update old season booking
+    (self.bookerBooking[msg.sender])[_runningSeason].originalVolume += _volume
+    (self.bookerBooking[msg.sender])[_runningSeason].volume += _volume
+    (self.bookerBooking[msg.sender])[_runningSeason].delivered = False
+    (self.bookerBooking[msg.sender])[_runningSeason].deposit += msg.value
   # Increment booker total bookings
   if (self.bookedSeason[msg.sender])[_runningSeason] == False:
     self.farmMarket[_tokenId].bookers += 1
@@ -342,35 +348,15 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
     (self.marketBookingIndex[_tokenId])[_runningSeason] = self.farmMarket[_tokenId].bookers
   # Burn supply
   self.burnSupply(_tokenId, _volume)
-  # Index market booking
   _marketIndex: uint256 = (self.marketBookingIndex[_tokenId])[_runningSeason]
-  (self.marketBooking[_tokenId])[_marketIndex] = (self.bookerBooking[msg.sender])[_runningSeason]
-
-# @dev Burn booker booking
-# @param _tokenId Tokenized farm ID
-# @param _booker Booker address
-# @param _seasonNo Season booked
-# @param _volume Volume to burn
-@internal
-def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256) -> (uint256, uint256, uint256):
-  burningDeposit: uint256 = self.farmMarket[_tokenId].price * _volume
-  _runningSeason: uint256 = _tokenId + _seasonNo
-  # Burn booker deposit
-  (self.bookerBooking[_booker])[_runningSeason].deposit -= burningDeposit
-  # Burn booker volume
-  (self.bookerBooking[_booker])[_runningSeason].volume -= _volume
-  if (self.bookerBooking[_booker])[_runningSeason].volume == 0:
-    # Update book status for booker
-    (self.bookerBooking[_booker])[_runningSeason].delivered = True
-    # Update book status for market
-    _index: uint256 = (self.marketBookingIndex[_tokenId])[_runningSeason]
-    (self.marketBooking[_tokenId])[_index].delivered = True
-  # Calculate farm dues
-  farmDues: uint256 = burningDeposit - MARKET_FEE
-  # Calculate provider fee
-  providerFee: uint256 = burningDeposit - farmDues
-  # Return farm overdues
-  return burningDeposit, farmDues, providerFee
+  _book: Book = (self.bookerBooking[msg.sender])[_runningSeason]
+  if (self.marketBooking[_tokenId])[_marketIndex].date == 0: # New book
+    (self.marketBooking[_tokenId])[_marketIndex] = _book  
+  else: # Old book
+    (self.marketBooking[_tokenId])[_marketIndex].originalVolume += _volume
+    (self.marketBooking[_tokenId])[_marketIndex].volume += _volume
+    (self.marketBooking[_tokenId])[_marketIndex].delivered = False
+    (self.marketBooking[_tokenId])[_marketIndex].deposit += msg.value
 
 # @dev Leave a review for a market
 # @param _tokenId Tokenized farm market
@@ -378,7 +364,7 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
 # @param _sender Reviewer
 # Throw if `self.farmContract.exists(_tokenId) == False`
 @internal
-def leaveReview(_tokenId: uint256, _review: String[225], _sender: address):
+def leaveReview(_tokenId: uint256, _review: String[100], _sender: address):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   self.marketReview[_tokenId] += 1 # Count farm market review
   (self.review[_tokenId])[self.marketReview[_tokenId]] = Review({ date: block.timestamp, comment: _review, reviewer: _sender })
@@ -405,6 +391,34 @@ def getReviewForMarket(_tokenId: uint256, _index: uint256) -> Review:
   assert _index <= self.marketReview[_tokenId] # dev: index out of range
   return (self.review[_tokenId])[_index]
 
+# @dev Burn booker booking
+# @param _tokenId Tokenized farm ID
+# @param _booker Booker address
+# @param _seasonNo Season booked
+# @param _volume Volume to burn
+@internal
+def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume: uint256, _review: String[100]) -> (uint256, uint256, uint256):
+  burningDeposit: uint256 = self.farmMarket[_tokenId].price * _volume
+  _runningSeason: uint256 = _tokenId + _seasonNo
+  # Burn booker deposit
+  (self.bookerBooking[_booker])[_runningSeason].deposit -= burningDeposit
+  # Burn booker volume
+  (self.bookerBooking[_booker])[_runningSeason].volume -= _volume
+  if (self.bookerBooking[_booker])[_runningSeason].volume == 0:
+    # Update book status for booker
+    (self.bookerBooking[_booker])[_runningSeason].delivered = True
+    # Review
+    self.leaveReview(_tokenId, _review, _booker)
+    # Update book status for market
+    _index: uint256 = (self.marketBookingIndex[_tokenId])[_runningSeason]
+    (self.marketBooking[_tokenId])[_index].delivered = True
+  # Calculate farm dues
+  farmDues: uint256 = burningDeposit - MARKET_FEE
+  # Calculate provider fee
+  providerFee: uint256 = burningDeposit - farmDues
+  # Return farm overdues
+  return burningDeposit, farmDues, providerFee
+
 # @dev Confirm receivership and leave a review
 # @param _tokenId Tokenized farm id
 # @param _volume Booking volume to confirm
@@ -417,7 +431,7 @@ def getReviewForMarket(_tokenId: uint256, _index: uint256) -> Review:
 # Throw if `_seasonNo > seasonInterface.currentSeason(_tokenId)`
 @external
 @payable
-def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _farmer: address, _provider: address, _review: String[225]):
+def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _farmer: address, _provider: address, _review: String[100]):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert _volume != 0 # dev: volume cannot be 0
   assert (self.bookerBooking[msg.sender])[_tokenId + _seasonNo].volume != 0 # dev: no bookings
@@ -426,7 +440,7 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
   burningDeposit: uint256 = 0
   farmDues: uint256 = 0
   providerFee: uint256 = 0
-  (burningDeposit, farmDues, providerFee) = self.burnBooking(_tokenId, msg.sender, _seasonNo, _volume)
+  (burningDeposit, farmDues, providerFee) = self.burnBooking(_tokenId, msg.sender, _seasonNo, _volume, _review)
   # Update seal deals tx
   self.farmTx[_tokenId] += burningDeposit - MARKET_FEE
   self.accountTx[msg.sender] += burningDeposit - MARKET_FEE
@@ -437,8 +451,6 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
   self.marketDelivery[_tokenId] += 1
   # Update total receivership
   self.completedDelivery += 1
-  # Leave review
-  self.leaveReview(_tokenId, _review, msg.sender)
   # Transfer dues
   send(_farmer, farmDues)
   send(_provider, providerFee)
