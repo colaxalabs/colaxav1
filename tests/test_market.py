@@ -281,6 +281,25 @@ def test_get_market_review(market_contract, accounts, web3):
 
     # Get reviews for this market
     reviews = market_contract.marketReviewCount(token_id)
+
+    # Assertions
+    assert reviews == 0
+
+def test_get_market_review_after_total_booking_volume_confirmation(market_contract, accounts, web3):
+    _price = web3.toWei(1, 'ether')
+    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    prev_balance = accounts[2].balance()
+    prev_owner_balance = accounts[0].balance()
+
+    # Book harvest
+    booking_fee = web3.toWei(1, 'ether')
+    market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': booking_fee * 3})
+
+    # Confirm receivership
+    market_contract.confirmReceivership(token_id, 3, 1, accounts[0], accounts[2], 'Rotten tomatoes', {'from': accounts[1], 'value': web3.toWei(0.0037, 'ether')})
+
+    # Get reviews for this market
+    reviews = market_contract.marketReviewCount(token_id)
     allReviews = list()
     for i in range(1, reviews+1):
         allReviews.append(market_contract.getReviewForMarket(token_id, i))
