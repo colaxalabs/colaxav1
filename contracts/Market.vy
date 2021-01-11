@@ -14,9 +14,11 @@ interface Season:
 
 event BookHarvest:
   _tokenId: indexed(uint256)
-  _farmVolume: uint256
+  _newMarketVolume: uint256
   _bookerVolume: uint256
   _booker: indexed(address)
+  _closeDate: uint256
+  _marketBookers: uint256
 
 event CreateMarket:
   _totalMarket: uint256
@@ -29,6 +31,7 @@ event Confirmation:
   _farmTxVolume: uint256
   _delivered: bool
   _newBookerVolume: uint256
+  _newBookerDeposit: uint256
 
 event LeaveReview:
   _tokenId: uint256
@@ -386,9 +389,11 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
   # Log booking
   log BookHarvest(
     _tokenId,
-    (self.marketBooking[_tokenId])[self.marketBookingIndex[_tokenId][_runningSeason]].volume,
+    self.farmMarket[_tokenId].remainingSupply,
     (self.bookerBooking[msg.sender])[_runningSeason].volume,
-    msg.sender
+    msg.sender,
+    self.farmMarket[_tokenId].closeDate,
+    self.farmMarket[_tokenId].bookers
   )
 
 # @dev Leave a review for a market
@@ -477,9 +482,10 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
   providerFee: uint256 = 0
   (burningDeposit, farmDues, providerFee) = self.burnBooking(_tokenId, msg.sender, _seasonNo, _volume, _review)
   # Update seal deals tx
-  self.farmTx[_tokenId] += burningDeposit - MARKET_FEE
-  self.accountTx[msg.sender] += burningDeposit - MARKET_FEE
-  self.platformTx += burningDeposit - MARKET_FEE
+  _returnTx: uint256 = burningDeposit - MARKET_FEE
+  self.farmTx[_tokenId] += _returnTx
+  self.accountTx[msg.sender] += _returnTx
+  self.platformTx += _returnTx
   # Update delivered booking for booker
   self.bookerDelivery[msg.sender] += 1
   # Update delivered booking for farm market
@@ -497,7 +503,8 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
     _tokenId,
     self.farmTx[_tokenId],
     self.bookerBooking[msg.sender][_tokenId + _seasonNo].delivered,
-    self.bookerBooking[msg.sender][_tokenId + _seasonNo].volume
+    self.bookerBooking[msg.sender][_tokenId + _seasonNo].volume,
+    self.bookerBooking[msg.sender][_tokenId + _seasonNo].deposit
   )
 
 # @dev Get total delivery for an account
