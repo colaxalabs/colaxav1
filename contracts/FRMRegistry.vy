@@ -22,9 +22,7 @@ event ApprovalForAll:
   _approved: bool
 
 event Tokenize:
-  _owner: indexed(address)
-  _tokenId: indexed(uint256)
-  _name: String[100]
+  _totalFarms: uint256
 
 # @dev Farm type
 struct Farm:
@@ -377,7 +375,7 @@ def tokenizeLand(_name: String[100], _size: String[20], _location: String[225], 
   self.indexedTokenizedFarms[self.tokenizedLands] = _farm
   # Indexed
   (self.ownedNFT[msg.sender])[self.ownerNFTCount[msg.sender]] = _farm
-  log Tokenize(msg.sender, _tokenId, _name) 
+  log Tokenize(self.tokenizedLands) 
 
 # @dev Query tokenized farm land
 # @dev Throw if `_tokenId` is not valid

@@ -10,6 +10,30 @@ interface Season:
   def currentSeason(_tokenId: uint256) -> uint256: view
   def hashedSeason(_tokenId: uint256, _seasonNo: uint256) -> bytes32: view
 
+# Events
+
+event BookHarvest:
+  _tokenId: indexed(uint256)
+  _farmVolume: uint256
+  _bookerVolume: uint256
+  _booker: indexed(address)
+
+event CreateMarket:
+  _totalMarket: uint256
+
+event Confirmation:
+  _txVolume: uint256
+  _bookerTxVolume: uint256
+  _booker: indexed(address)
+  _tokenId: indexed(uint256)
+  _farmTxVolume: uint256
+  _delivered: bool
+  _newBookerVolume: uint256
+
+event LeaveReview:
+  _tokenId: uint256
+  _totalReviews: uint256
+
 # @dev Market
 struct Market:
   tokenId: uint256
@@ -242,6 +266,8 @@ def createMarket(_tokenId: uint256, _crop: String[225], _price: uint256, _supply
   })
   # Marketed seasons
   self.marketedSeason[_tokenId][self.seasonContract.currentSeason(_tokenId)] = True
+  # Log creating markets event
+  log CreateMarket(self.markets)
 
 # @dev Mint season supply
 # @param _tokenId Tokenized farm ID
@@ -357,6 +383,13 @@ def bookHarvest(_tokenId: uint256, _volume: uint256, _seasonNo: uint256):
     (self.marketBooking[_tokenId])[_marketIndex].volume += _volume
     (self.marketBooking[_tokenId])[_marketIndex].delivered = False
     (self.marketBooking[_tokenId])[_marketIndex].deposit += msg.value
+  # Log booking
+  log BookHarvest(
+    _tokenId,
+    (self.marketBooking[_tokenId])[self.marketBookingIndex[_tokenId][_runningSeason]].volume,
+    (self.bookerBooking[msg.sender])[_runningSeason].volume,
+    msg.sender
+  )
 
 # @dev Leave a review for a market
 # @param _tokenId Tokenized farm market
@@ -368,6 +401,8 @@ def leaveReview(_tokenId: uint256, _review: String[100], _sender: address):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   self.marketReview[_tokenId] += 1 # Count farm market review
   (self.review[_tokenId])[self.marketReview[_tokenId]] = Review({ date: block.timestamp, comment: _review, reviewer: _sender })
+  # Log reviewing event
+  log LeaveReview(_tokenId, self.marketReview[_tokenId])
 
 # @dev Get count for farm market review
 # @param _tokenId Tokenized farm market
@@ -454,8 +489,16 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
   # Transfer dues
   send(_farmer, farmDues)
   send(_provider, providerFee)
-  # Log event
-  # log Receivership((self.bookerBookings[msg.sender])[_seasonNo].volume, (self.bookerBookings[msg.sender])[_seasonNo].deposit)
+  # Log booking confirmation event
+  log Confirmation(
+    self.platformTx,
+    self.accountTx[msg.sender],
+    msg.sender,
+    _tokenId,
+    self.farmTx[_tokenId],
+    self.bookerBooking[msg.sender][_tokenId + _seasonNo].delivered,
+    self.bookerBooking[msg.sender][_tokenId + _seasonNo].volume
+  )
 
 # @dev Get total delivery for an account
 # @param _address Address of the account
