@@ -58,9 +58,7 @@ def test_tokenize_farm(frmregistry_contract, accounts):
     # Check log contents
     assert frmregistry_contract.exists(token_id) == True
     assert len(tx.events) == 2
-    assert tx.events[1]['_owner'] == accounts[0]
-    assert tx.events[1]['_tokenId'] == token_id
-    assert tx.events[1]['_name'] == 'Arunga Vineyard'
+    assert tx.events[1]['_totalFarms'] == 1
 
 def test_get_owner_of_tokenized_farm(frmregistry_contract, accounts):
     tokenize_farm(frmregistry_contract, accounts)
