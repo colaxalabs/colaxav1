@@ -24,6 +24,10 @@ event ApprovalForAll:
 event Tokenize:
   _totalFarms: uint256
 
+event Transition:
+  _tokenId: uint256
+  _season: String[20]
+
 # @dev Farm type
 struct Farm:
   tokenId: uint256
@@ -436,6 +440,8 @@ def transitionState(_tokenId: uint256, _state: String[20], _sender: address):
   self.indexedTokenizedFarms[self.tokenizedFarms[_tokenId].platformIndex].season = _state
   # Update user owned NFT
   (self.ownedNFT[_sender])[self.tokenizedFarms[_tokenId].userIndex].season = _state
+  # Log transition event
+  log Transition(_tokenId, self.tokenizedFarms[_tokenId].season)
 
 # @dev Get token state
 # @param _tokenId Token ID
