@@ -24,11 +24,17 @@ def test_initial_state(market_contract):
 
 def test_create_market(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
     # Query market
     market = market_contract.getCurrentFarmMarket(token_id)
+    # Query market displays
+    displays = list()
+    for i in range(1, 4):
+        display = market_contract.getDisplays(token_id, 1, i)
+        displays.append(display)
 
     # Assertions
+    assert len(displays) == 3
     assert market_contract.totalMarkets() == 1
     assert market['price'] == _price
     assert market['remainingSupply'] == 3
@@ -36,7 +42,7 @@ def test_create_market(market_contract, accounts, web3):
 
 def test_query_current_farm_market(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Query current farm market
     market = market_contract.getCurrentFarmMarket(token_id)
@@ -46,22 +52,22 @@ def test_query_current_farm_market(market_contract, accounts, web3):
 
 def test_invalid_market_create_with_existing_supply(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Error assertion
     with brownie.reverts('dev: exhaust previous market supply'):
-        market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+        market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
 def test_invalid_market_create_with_invalid_tokenized_farm(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
 
     # Error assertion
     with brownie.reverts('dev: invalid tokenized farm'):
-        market_contract.createMarket(3, 'Tomatoe', _price, 3, "KG")
+        market_contract.createMarket(3, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
 def test_query_enlisted_markets(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Query markets
     markets = list()
@@ -71,11 +77,12 @@ def test_query_enlisted_markets(market_contract, accounts, web3):
         markets.append(market)
 
     # Assertions
+    assert len(markets) == 1
     assert markets[0]['price'] == _price
 
 def test_invalid_booking_with_invalid_tokenized_farm(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     with brownie.reverts('dev: invalid token id'):
@@ -83,7 +90,7 @@ def test_invalid_booking_with_invalid_tokenized_farm(market_contract, accounts, 
 
 def test_invalid_booking_with_not_farm_owner(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     with brownie.reverts('dev: owner cannot book his/her harvest'):
@@ -91,7 +98,7 @@ def test_invalid_booking_with_not_farm_owner(market_contract, accounts, web3):
 
 def test_invalid_booking_with_insufficient_funds(market_contract, accounts, web3):
     _price = web3.toWei(0, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     with brownie.reverts('dev: booking funds cannot be 0'):
@@ -99,7 +106,7 @@ def test_invalid_booking_with_insufficient_funds(market_contract, accounts, web3
 
 def test_invalid_booking_with_excess_booking_funds(market_contract, accounts, web3):
     _price = web3.toWei(2, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     with brownie.reverts('dev: insufficient booking funds'):
@@ -107,7 +114,7 @@ def test_invalid_booking_with_excess_booking_funds(market_contract, accounts, we
 
 def test_invalid_booking_with_insufficient_booking_fee(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     with brownie.reverts('dev: insufficient booking funds'):
@@ -115,7 +122,7 @@ def test_invalid_booking_with_insufficient_booking_fee(market_contract, accounts
 
 def test_book_harvest(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     _bookingFee = web3.toWei(1, 'ether')
@@ -149,7 +156,7 @@ def test_book_harvest(market_contract, accounts, web3):
 
 def test_query_previous_markets_for_farm(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     booking_fee = web3.toWei(1, 'ether')
@@ -168,7 +175,7 @@ def test_query_previous_markets_for_farm(market_contract, accounts, web3):
 
 def test_receive_confirmation_with_invalid_tokenized_farm(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     booking_fee = web3.toWei(1, 'ether')
@@ -180,7 +187,7 @@ def test_receive_confirmation_with_invalid_tokenized_farm(market_contract, accou
 
 def test_receive_confirmation_with_invalid_booker(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     booking_fee = web3.toWei(1, 'ether')
@@ -192,7 +199,7 @@ def test_receive_confirmation_with_invalid_booker(market_contract, accounts, web
 
 def test_receive_confirmation_with_invalid_booking_volume(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     booking_fee = web3.toWei(1, 'ether')
@@ -204,7 +211,7 @@ def test_receive_confirmation_with_invalid_booking_volume(market_contract, accou
 
 def test_receive_confirmation_with_zero_booking_volume(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     booking_fee = web3.toWei(1, 'ether')
@@ -216,7 +223,7 @@ def test_receive_confirmation_with_zero_booking_volume(market_contract, accounts
 
 def test_receive_confirmation_with_insufficient_booking_fee(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     booking_fee = web3.toWei(1, 'ether')
@@ -228,7 +235,7 @@ def test_receive_confirmation_with_insufficient_booking_fee(market_contract, acc
 
 def test_receive_confirmation(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
     prev_balance = accounts[2].balance()
     prev_owner_balance = accounts[0].balance()
 
@@ -251,7 +258,7 @@ def test_receive_confirmation(market_contract, accounts, web3):
 
 def test_get_review_for_invalid_tokenized_farm_market(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
     prev_balance = accounts[2].balance()
     prev_owner_balance = accounts[0].balance()
 
@@ -268,7 +275,7 @@ def test_get_review_for_invalid_tokenized_farm_market(market_contract, accounts,
 
 def test_get_market_review(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
     prev_balance = accounts[2].balance()
     prev_owner_balance = accounts[0].balance()
 
@@ -287,7 +294,7 @@ def test_get_market_review(market_contract, accounts, web3):
 
 def test_get_market_review_after_total_booking_volume_confirmation(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
-    market_contract.createMarket(token_id, 'Tomatoe', _price, 3, "KG")
+    market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
     prev_balance = accounts[2].balance()
     prev_owner_balance = accounts[0].balance()
 
