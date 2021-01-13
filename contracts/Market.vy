@@ -38,6 +38,7 @@ event LeaveReview:
   _totalReviews: uint256
 
 # @dev Market
+harvestDispays: HashMap[uint256, HashMap[uint256, String[100]]] # seasonId => count => imageHash
 struct Market:
   tokenId: uint256
   season: uint256
@@ -205,6 +206,22 @@ def getFarmPrevMarket(_tokenId: uint256, _index: uint256) -> Market:
   assert _index <= self.totalPrevMarkets[_tokenId]
   return (self.previousMarkets[_tokenId])[_index]
 
+# @dev Get market displays
+# @param _tokenId Tokenized farm market id
+# @param _seasonNo Farm season
+# @param _index Index of the display
+# Throw `self.farmContract.exists(_tokenId) == False`
+# Throw `_seasonNo > self.seasonContract.currentSeason(_tokenId)`
+# Throw `_index > 3`
+@external
+@view
+def getDisplays(_tokenId: uint256, _seasonNo: uint256, _index: uint256) -> String[100]:
+  assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
+  assert _seasonNo <= self.seasonContract.currentSeason(_tokenId) # dev: season out of range
+  assert _index <= 3 # dev: index out of range
+  _runningSeason: uint256 = _tokenId + _seasonNo
+  return self.harvestDispays[_runningSeason][_index]
+
 # @dev Get current market for a farm
 # @param _tokenId Tokenized farm ID
 # Throw if `farmContract.exists(_tokenId) == False`
@@ -243,11 +260,12 @@ def getMarketBooking(_tokenId: uint256, _index: uint256) -> Book:
 # @param _supply Supply
 # @param _unit Supply unit(kilogram)
 @external
-def createMarket(_tokenId: uint256, _crop: String[225], _price: uint256, _supply: uint256, _unit: String[2]):
+def createMarket(_tokenId: uint256, _crop: String[225], _image1: String[100], _image2: String[100], _image3: String[100], _price: uint256, _supply: uint256, _unit: String[2]):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid tokenized farm
   assert self.farmContract.ownerOf(_tokenId) == msg.sender # dev: only owner can create market
   assert self.seasonContract.getSeason(_tokenId) == 'Marketing'
   assert self.farmMarket[_tokenId].remainingSupply == 0 # dev: exhaust previous market supply
+  _runningSeason: uint256 = _tokenId + self.seasonContract.currentSeason(_tokenId)
   # Market count
   if self.isMarket[_tokenId] == False:
     self.markets += 1
@@ -255,6 +273,9 @@ def createMarket(_tokenId: uint256, _crop: String[225], _price: uint256, _supply
     self.indexEnlistedMarkets[self.markets] = _tokenId
     self.isMarket[_tokenId] = True
   # Store market
+  (self.harvestDispays[_runningSeason])[1] = _image1
+  (self.harvestDispays[_runningSeason])[2] = _image2
+  (self.harvestDispays[_runningSeason])[3] = _image3
   self.farmMarket[_tokenId] = Market({
     tokenId: _tokenId,
     season: self.seasonContract.currentSeason(_tokenId),
@@ -474,8 +495,9 @@ def burnBooking(_tokenId: uint256, _booker: address, _seasonNo: uint256, _volume
 def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256, _farmer: address, _provider: address, _review: String[100]):
   assert self.farmContract.exists(_tokenId) == True # dev: invalid token id
   assert _volume != 0 # dev: volume cannot be 0
-  assert (self.bookerBooking[msg.sender])[_tokenId + _seasonNo].volume != 0 # dev: no bookings
-  assert _volume <= (self.bookerBooking[msg.sender])[_tokenId + _seasonNo].volume # dev: volume out of range
+  _runningSeason: uint256 = _tokenId + _seasonNo
+  assert (self.bookerBooking[msg.sender])[_runningSeason].volume != 0 # dev: no bookings
+  assert _volume <= (self.bookerBooking[msg.sender])[_runningSeason].volume # dev: volume out of range
   assert msg.value == MARKET_FEE # dev: insufficient confirmation fee
   burningDeposit: uint256 = 0
   farmDues: uint256 = 0
@@ -502,9 +524,9 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
     msg.sender,
     _tokenId,
     self.farmTx[_tokenId],
-    self.bookerBooking[msg.sender][_tokenId + _seasonNo].delivered,
-    self.bookerBooking[msg.sender][_tokenId + _seasonNo].volume,
-    self.bookerBooking[msg.sender][_tokenId + _seasonNo].deposit
+    self.bookerBooking[msg.sender][_runningSeason].delivered,
+    self.bookerBooking[msg.sender][_runningSeason].volume,
+    self.bookerBooking[msg.sender][_runningSeason].deposit
   )
 
 # @dev Get total delivery for an account
