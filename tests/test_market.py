@@ -35,6 +35,9 @@ def test_create_market(market_contract, accounts, web3):
 
     # Assertions
     assert len(displays) == 3
+    assert displays[0] == 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789'
+    assert displays[1] == 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789'
+    assert displays[2] == 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789'
     assert market_contract.totalMarkets() == 1
     assert market['price'] == _price
     assert market['remainingSupply'] == 3
