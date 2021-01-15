@@ -28,6 +28,7 @@ event Confirmation:
   _bookerTxVolume: uint256
   _booker: indexed(address)
   _tokenId: indexed(uint256)
+  _seasonNo: uint256
   _farmTxVolume: uint256
   _delivered: bool
   _newBookerVolume: uint256
@@ -504,6 +505,7 @@ def confirmReceivership(_tokenId: uint256, _volume: uint256, _seasonNo: uint256,
     self.accountTx[msg.sender],
     msg.sender,
     _tokenId,
+    _seasonNo,
     self.farmTx[_tokenId],
     self.bookerBooking[msg.sender][_runningSeason].delivered,
     self.bookerBooking[msg.sender][_runningSeason].volume,
