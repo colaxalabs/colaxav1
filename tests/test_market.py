@@ -2,18 +2,31 @@ import pytest
 import brownie
 
 token_id = 4863475
+token_id2 = 1089233
 
 @pytest.fixture
-def market_contract(FRMRegistry, Season, Market, accounts):
-    farm_registry = FRMRegistry.deploy({'from': accounts[0]})
-    farm_registry.tokenizeLand('Arunga Vineyard', '294.32ha', 'Lyaduywa, Kenya', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
-    season_contract = Season.deploy(farm_registry.address, {'from': accounts[0]})
+def farm_contract(FRMRegistry, accounts):
+    yield FRMRegistry.deploy({'from': accounts[0]})
+
+@pytest.fixture
+def season_contract(Season, farm_contract, accounts):
+    yield Season.deploy(farm_contract.address, {'from': accounts[0]})
+
+@pytest.fixture
+def market_contract(farm_contract, season_contract, Market, accounts):
+    farm_contract.tokenizeLand('Arunga Vineyard', '294.32ha', 'Lyaduywa, Kenya', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'loam soil', token_id, {'from': accounts[0]})
+    farm_contract.tokenizeLand('Matoke Farm', '4.3ha', 'Lurambi, Kenya', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'clay soil', token_id2, {'from': accounts[1]})
     season_contract.openSeason(token_id)
+    season_contract.openSeason(token_id2, {'from': accounts[1]})
     season_contract.confirmPreparations(token_id, 'Tomatoe', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPreparations(token_id2, 'Green Banana', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', {'from': accounts[1]})
     season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id2, 'Flore 0xlpq', 'One Acre Fund', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '120kg', 'Jobe 1960 Organic Fertilizer', 'One Acre Fund', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', {'from': accounts[1]})
     season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id2, '', '', '', '' , '', {'from': accounts[1]})
     season_contract.confirmHarvesting(token_id, "120 KG")
-    yield Market.deploy(farm_registry.address, season_contract.address, {'from': accounts[0]})
+    season_contract.confirmHarvesting(token_id2, "60 KG", {'from': accounts[1]})
+    yield Market.deploy(farm_contract.address, season_contract.address, {'from': accounts[0]})
 
 def test_initial_state(market_contract):
 
@@ -25,11 +38,12 @@ def test_initial_state(market_contract):
 def test_create_market(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
     market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
+    market_contract.createMarket(token_id2, 'Green Banana', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG", {'from': accounts[1]})
     # Query market
     market = market_contract.getCurrentFarmMarket(token_id)
 
     # Assertions
-    assert market_contract.totalMarkets() == 1
+    assert market_contract.totalMarkets() == 2
     assert market['price'] == _price
     assert market['remainingSupply'] == 3
     assert market_contract.isSeasonMarketed(token_id, 1) == True
@@ -37,12 +51,13 @@ def test_create_market(market_contract, accounts, web3):
 def test_query_current_farm_market(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
     market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
+    market_contract.createMarket(token_id2, 'Green Banana', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 30, "KG", {'from': accounts[1]})
 
     # Query current farm market
-    market = market_contract.getCurrentFarmMarket(token_id)
+    market = market_contract.getCurrentFarmMarket(token_id2)
 
     # Assertions
-    assert market['remainingSupply'] == 3
+    assert market['remainingSupply'] == 30
 
 def test_invalid_market_create_with_existing_supply(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
@@ -62,6 +77,7 @@ def test_invalid_market_create_with_invalid_tokenized_farm(market_contract, acco
 def test_query_enlisted_markets(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
     market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
+    market_contract.createMarket(token_id2, 'Green Banana', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 30, "KG", {'from': accounts[1]})
 
     # Query markets
     markets = list()
@@ -71,7 +87,8 @@ def test_query_enlisted_markets(market_contract, accounts, web3):
         markets.append(market)
 
     # Assertions
-    assert markets[0]['price'] == _price
+    assert len(markets) == 2
+    assert markets[1]['remainingSupply'] == 30
 
 def test_invalid_booking_with_invalid_tokenized_farm(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
@@ -113,22 +130,34 @@ def test_invalid_booking_with_insufficient_booking_fee(market_contract, accounts
     with brownie.reverts('dev: insufficient booking funds'):
         market_contract.bookHarvest(token_id, 3, 1, {'from': accounts[1], 'value': _price * 2})
 
-def test_book_harvest(market_contract, accounts, web3):
+def test_book_harvest(market_contract, season_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
     market_contract.createMarket(token_id, 'Tomatoe', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
 
     # Book harvest
     _bookingFee = web3.toWei(1, 'ether')
-    market_contract.bookHarvest(token_id, 1, 1, {'from': accounts[1], 'value': _bookingFee * 1})
-    market_contract.bookHarvest(token_id, 1, 1, {'from': accounts[1], 'value': _bookingFee * 1})
+    volume = 1
+    market_contract.bookHarvest(token_id, volume, 1, {'from': accounts[2], 'value': _bookingFee * volume})
+    market_contract.bookHarvest(token_id, volume, 1, {'from': accounts[2], 'value': _bookingFee * volume})
+    market_contract.bookHarvest(token_id, volume, 1, {'from': accounts[2], 'value': _bookingFee * volume})
+    season_contract.closeSeason(token_id)
+    season_contract.openSeason(token_id)
+    season_contract.confirmPreparations(token_id, 'Avocado', 'Organic Fertilizer', 'Cow Shed Manure', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmPlanting(token_id, 'F1', 'Kenya Seed Company', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', '1200kg', 'Jobe 1960 Organic Fertilizer', 'Kenya Seed Supplier', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmGrowth(token_id, 'Army worm', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', 'Infestor x32H', 'Aphids Supplier' , 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789')
+    season_contract.confirmHarvesting(token_id, "120 KG")
+    market_contract.createMarket(token_id, 'Avocado', 'QmUfideC1r5JhMVwgd8vjC7DtVnXw3QGfCSQA7fUVHK789', _price, 3, "KG")
+    market_contract.bookHarvest(token_id, volume, 2, {'from': accounts[2], 'value': _bookingFee * volume})
+    market_contract.bookHarvest(token_id, volume, 2, {'from': accounts[2], 'value': _bookingFee * volume})
+    market_contract.bookHarvest(token_id, volume, 2, {'from': accounts[2], 'value': _bookingFee * volume})
     market = market_contract.getCurrentFarmMarket(token_id)
 
     # Get booker bookings
-    bookings = market_contract.totalBookerBooking(accounts[1])
+    bookings = market_contract.totalBookerBooking(accounts[2])
     booking_list = list()
     for i in range(1, bookings + 1):
-        season_booked = market_contract.getSeasonBooked(i, accounts[1])
-        booking_list.append(market_contract.getBookerBooking(season_booked, accounts[1]))
+        season_booked = market_contract.getSeasonBooked(i, accounts[2])
+        booking_list.append(market_contract.getBookerBooking(season_booked, accounts[2]))
 
     # Get market bookings
     market_booking_list = list()
@@ -137,15 +166,16 @@ def test_book_harvest(market_contract, accounts, web3):
         market_booking_list.append(market_contract.getMarketBooking(token_id, i))
 
     # Assertions
-    assert bookings == 1
-    assert market_bookings == 1
+    assert bookings == 2
+    assert market_bookings == 2
+    assert len(market_booking_list) == 2
     assert market['bookers'] == 1
-    assert market['remainingSupply'] == 1
-    assert booking_list[0]['deposit'] == web3.toWei(2, 'ether')
-    assert booking_list[0]['volume'] == 2
-    assert market_booking_list[0]['booker'] == accounts[1]
-    assert market_booking_list[0]['volume'] == 2
-    assert market_booking_list[0]['deposit'] == web3.toWei(2, 'ether')
+    assert market['remainingSupply'] == 0
+    assert booking_list[0]['deposit'] == web3.toWei(3, 'ether')
+    assert booking_list[0]['volume'] == 3
+    assert market_booking_list[0]['booker'] == accounts[2]
+    assert market_booking_list[0]['volume'] == 3
+    assert market_booking_list[0]['deposit'] == web3.toWei(3, 'ether')
 
 def test_query_previous_markets_for_farm(market_contract, accounts, web3):
     _price = web3.toWei(1, 'ether')
